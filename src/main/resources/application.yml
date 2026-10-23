@@ -1,0 +1,42 @@
+spring:
+  application:
+    name: taskgotchi-backend
+  datasource:
+    url: jdbc:h2:mem:taskgotchidb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driverClassName: org.h2.Driver
+    username: sa
+    password:
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+
+server:
+  port: 8080
+
+taskgotchi:
+  cors:
+    allowed-origins:
+      - http://localhost:5173
+      - http://localhost:3000
+  pet:
+    xp-thresholds:
+      baby: 100
+      young: 300
+      adult: 700
+      legendary: 1500
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method

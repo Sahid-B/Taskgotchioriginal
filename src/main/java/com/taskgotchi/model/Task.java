@@ -54,6 +54,12 @@ public class Task {
 
     private LocalDateTime completedAt;
 
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @Column(nullable = false)
+    private LocalDateTime updatedAt;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "boss_id")
     private Boss boss;
@@ -69,5 +75,12 @@ public class Task {
         if (difficulty == null) difficulty = TaskDifficulty.MEDIUM;
         if (xpReward == null) xpReward = 50;
         if (coinReward == null) coinReward = 20;
+        if (createdAt == null) createdAt = LocalDateTime.now();
+        if (updatedAt == null) updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 }

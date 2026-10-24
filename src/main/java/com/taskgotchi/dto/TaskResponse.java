@@ -18,6 +18,8 @@ public record TaskResponse(
         Integer xpReward,
         Integer coinReward,
         LocalDateTime completedAt,
+        LocalDateTime createdAt,
+        LocalDateTime updatedAt,
         Long bossId,
         Long parentTaskId
 ) {}

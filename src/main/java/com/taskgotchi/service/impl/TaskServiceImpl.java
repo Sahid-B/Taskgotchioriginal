@@ -39,7 +39,7 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<TaskResponse> getTasks(TaskStatus status, Long categoryId, TaskPriority priority, LocalDateTime dueBefore, Pageable pageable) {
+    public Page<TaskResponse> getTasks(TaskStatus status, Long categoryId, TaskPriority priority, LocalDateTime dueBefore, String title, Pageable pageable) {
         Long userId = currentUserProvider.getCurrentUserId();
 
         Specification<Task> spec = (root, query, cb) -> {
@@ -58,12 +58,14 @@ public class TaskServiceImpl implements TaskService {
             if (dueBefore != null) {
                 predicates.add(cb.lessThanOrEqualTo(root.get("dueDate"), dueBefore));
             }
+            if (title != null && !title.trim().isEmpty()) {
+                predicates.add(cb.like(cb.lower(root.get("title")), "%" + title.toLowerCase().trim() + "%"));
+            }
 
             return cb.and(predicates.toArray(new Predicate[0]));
         };
 
         return taskRepository.findAll(spec, pageable).map(task -> {
-            // Evaluar de forma dinámica si está OVERDUE antes de mapear
             if (task.getStatus() == TaskStatus.PENDING && task.getDueDate() != null && task.getDueDate().isBefore(LocalDateTime.now())) {
                 task.setStatus(TaskStatus.OVERDUE);
             }
@@ -76,7 +78,7 @@ public class TaskServiceImpl implements TaskService {
     public TaskResponse getTaskById(Long id) {
         Long userId = currentUserProvider.getCurrentUserId();
         Task task = taskRepository.findByIdAndUserId(id, userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Tarea no encontrada o no pertenece al usuario"));
+                .orElseThrow(() -> new ResourceNotFoundException("Tarea no encontrada con ID: " + id));
 
         if (task.getStatus() == TaskStatus.PENDING && task.getDueDate() != null && task.getDueDate().isBefore(LocalDateTime.now())) {
             task.setStatus(TaskStatus.OVERDUE);
@@ -113,7 +115,6 @@ public class TaskServiceImpl implements TaskService {
             task.setParentTask(parentTask);
         }
 
-        // Asignar recompensas según dificultad
         int xpReward = switch (request.difficulty()) {
             case EASY -> 20;
             case MEDIUM -> 50;
@@ -136,7 +137,7 @@ public class TaskServiceImpl implements TaskService {
     public TaskResponse updateTask(Long id, TaskRequest request) {
         Long userId = currentUserProvider.getCurrentUserId();
         Task task = taskRepository.findByIdAndUserId(id, userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Tarea no encontrada o no pertenece al usuario"));
+                .orElseThrow(() -> new ResourceNotFoundException("Tarea no encontrada con ID: " + id));
 
         if (task.getStatus() == TaskStatus.COMPLETED) {
             throw new BusinessRuleException("No se puede editar una tarea que ya ha sido completada");
@@ -156,7 +157,6 @@ public class TaskServiceImpl implements TaskService {
             task.setCategory(null);
         }
 
-        // Actualizar recompensas si cambió la dificultad
         int xpReward = switch (request.difficulty()) {
             case EASY -> 20;
             case MEDIUM -> 50;
@@ -179,7 +179,7 @@ public class TaskServiceImpl implements TaskService {
     public void deleteTask(Long id) {
         Long userId = currentUserProvider.getCurrentUserId();
         Task task = taskRepository.findByIdAndUserId(id, userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Tarea no encontrada o no pertenece al usuario"));
+                .orElseThrow(() -> new ResourceNotFoundException("Tarea no encontrada con ID: " + id));
         taskRepository.delete(task);
     }
 
@@ -188,7 +188,7 @@ public class TaskServiceImpl implements TaskService {
     public TaskResponse completeTask(Long id) {
         Long userId = currentUserProvider.getCurrentUserId();
         Task task = taskRepository.findByIdAndUserId(id, userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Tarea no encontrada o no pertenece al usuario"));
+                .orElseThrow(() -> new ResourceNotFoundException("Tarea no encontrada con ID: " + id));
 
         if (task.getStatus() == TaskStatus.COMPLETED) {
             throw new BusinessRuleException("La tarea ya se encuentra completada");
@@ -198,21 +198,18 @@ public class TaskServiceImpl implements TaskService {
         task.setCompletedAt(LocalDateTime.now());
         task = taskRepository.save(task);
 
-        // Sumar XP y monedas a la mascota del usuario y registrar evento
         String reason = "Completó la tarea: " + task.getTitle();
         petInternalService.addXpAndCoins(userId, task.getXpReward(), task.getCoinReward(), reason);
 
-        // Si la tarea está asociada a un jefe, reducir la vida del jefe
         if (task.getBoss() != null) {
             Boss boss = task.getBoss();
             if (boss.getStatus() == BossStatus.ACTIVE) {
-                int damage = task.getXpReward(); // Daño proporcional al XP de la subtarea
+                int damage = task.getXpReward();
                 int newHp = Math.max(0, boss.getCurrentHp() - damage);
                 boss.setCurrentHp(newHp);
 
                 if (newHp == 0) {
                     boss.setStatus(BossStatus.DEFEATED);
-                    // Opcional: Recompensa adicional por derrotar al jefe
                     petInternalService.addXpAndCoins(userId, 150, 100, "¡Derrotó al Jefe " + boss.getTitle() + "!");
                 }
                 bossRepository.save(boss);

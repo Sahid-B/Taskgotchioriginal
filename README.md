@@ -1,28 +1,85 @@
-# Taskgotchi - Backend REST API
+# Taskgotchi - Backend REST API & Frontend Base
 
-Taskgotchi es una plataforma web orientada a estudiantes que gestiona tareas, hábitos y proyectos grandes (jefes finales) mientras cuidan una mascota virtual en 2D que refleja de forma dinámicamente su nivel de productividad y constancia.
+Taskgotchi es una plataforma web orientada a estudiantes que gestiona tareas, hábitos y proyectos grandes (jefes finales) mientras cuidan una mascota virtual en 2D que refleja dinámicamente su nivel de productividad y constancia.
 
 ---
 
-## 🚀 Cómo ejecutar el proyecto
+## 🏛️ Arquitectura por Capas (`com.taskgotchi`)
 
-### Requisitos previos
-- Java 17 o superior
-- Apache Maven 3.8+
+El backend está diseñado siguiendo una arquitectura en capas limpia y desacoplada:
 
-### Instrucciones
-1. Clonar el repositorio y acceder a la carpeta raíz del backend.
-2. Ejecutar la aplicación con Maven:
-   ```bash
-   mvn spring-boot:run
+- `controller`: Controladores REST (`@RestController`) que gestionan solicitudes/respuestas HTTP mediante DTOs.
+- `service`: Interfaces y clases de implementación (`service/impl`) con la lógica de negocio y transacciones `@Transactional`.
+- `repository`: Repositorios Spring Data JPA que extienden `JpaRepository` con consultas derivadas para aislamiento de datos.
+- `model`: Entidades JPA y enums del dominio.
+- `dto`: Records DTO para peticiones, respuestas e informes de error uniformes.
+- `mapper`: Componentes Spring para la conversión entre entidades y DTOs.
+- `exception`: Excepciones de dominio personalizadas y manejador global `@RestControllerAdvice`.
+- `config`: Configuraciones de OpenAPI/Swagger UI, CORS, Web MVC y Security esqueleto.
+- `security`: Abstracción para la gestión e inyección del usuario autenticado actual.
+
+---
+
+## 🛠️ Tecnologías y Requisitos
+
+- **Java**: Java 21
+- **Framework**: Spring Boot 3.2.x / 4.x
+- **Persistencia**: Spring Data JPA + PostgreSQL 16 (H2 disponible en perfil dev/test)
+- **Documentación API**: Springdoc OpenAPI v3 / Swagger UI
+- **Frontend**: React + TypeScript + Vite (`frontend/`)
+
+---
+
+## 🚀 Guía de Inicio Rápido en Windows
+
+### 1. Configuración de PostgreSQL
+
+1. Instalar PostgreSQL 16 y asegurar que el servicio esté corriendo en el puerto `5432`.
+2. Crear la base de datos desde `psql` o pgAdmin:
+   ```sql
+   CREATE DATABASE taskgotchidb;
    ```
-3. La aplicación se iniciará en `http://localhost:8080`.
-4. La consola H2 para desarrollo se encuentra accesible en `http://localhost:8080/h2-console` (JDBC URL: `jdbc:h2:mem:taskgotchidb`, usuario: `sa`, contraseña vacía).
+3. Configurar las variables de entorno en Windows (CMD o PowerShell):
+   **PowerShell:**
+   ```powershell
+   $env:DB_HOST="localhost"
+   $env:DB_PORT="5432"
+   $env:DB_NAME="taskgotchidb"
+   $env:DB_USER="postgres"
+   $env:DB_PASSWORD="tu_password_aqui"
+   ```
+   **CMD:**
+   ```cmd
+   set DB_HOST=localhost
+   set DB_PORT=5432
+   set DB_NAME=taskgotchidb
+   set DB_USER=postgres
+   set DB_PASSWORD=tu_password_aqui
+   ```
 
-### Documentación e Interfaz de Swagger UI
-Toda la documentación interactiva OpenAPI v3 y la prueba de los endpoints REST están disponibles en:
+### 2. Ejecutar el Backend (Spring Boot)
+
+En la carpeta raíz del proyecto:
+```bash
+mvn spring-boot:run
+```
+*(Para desarrollo local con base de datos H2 en memoria, ejecutar: `mvn spring-boot:run -Dspring-boot.run.profiles=h2`)*
+
+El backend estará disponible en `http://localhost:8080`.
+
 - **Swagger UI**: `http://localhost:8080/swagger-ui.html`
 - **OpenAPI JSON**: `http://localhost:8080/v3/api-docs`
+
+### 3. Ejecutar el Frontend (React + Vite)
+
+En una nueva terminal, acceder a la carpeta `frontend`:
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+El frontend estará disponible en `http://localhost:5173`.
 
 ---
 
@@ -34,11 +91,11 @@ Toda la documentación interactiva OpenAPI v3 y la prueba de los endpoints REST 
 | | `POST` | `/api/v1/auth/login` | Autentica al usuario y devuelve token placeholder JWT. |
 | **UserController** | `GET` | `/api/v1/users/me` | Obtiene la información del usuario autenticado. |
 | | `PUT` | `/api/v1/users/me` | Actualiza el nombre de usuario o correo. |
-| **TaskController** | `GET` | `/api/v1/tasks` | Listado de tareas con paginación y filtros (status, categoryId, priority, dueBefore). |
-| | `GET` | `/api/v1/tasks/{id}` | Obtiene el detalle de una tarea. |
-| | `POST` | `/api/v1/tasks` | Crea una nueva tarea (201 Created + Location). |
-| | `PUT` | `/api/v1/tasks/{id}` | Modifica una tarea existente no completada. |
-| | `DELETE` | `/api/v1/tasks/{id}` | Elimina una tarea (204 No Content). |
+| **TaskController** | `GET` | `/api/v1/tasks` | Listado de tareas paginado y ordenable (`page=0`, `size=10`, `sort=id,asc`) con búsqueda por `title`. |
+| | `GET` | `/api/v1/tasks/{id}` | Obtiene el detalle de una tarea por ID. |
+| | `POST` | `/api/v1/tasks` | Crea una nueva tarea (`201 Created` + cabecera `Location`). |
+| | `PUT` | `/api/v1/tasks/{id}` | Modifica una tarea existente no completada (`200 OK`). |
+| | `DELETE` | `/api/v1/tasks/{id}` | Elimina una tarea (`204 No Content`). |
 | | `PATCH` | `/api/v1/tasks/{id}/complete` | Marca tarea como completada, suma XP y monedas a la mascota y registra evento. |
 | **CategoryController** | `GET` | `/api/v1/categories` | Lista todas las categorías del usuario. |
 | | `GET` | `/api/v1/categories/{id}` | Detalle de categoría. |
@@ -68,6 +125,43 @@ Toda la documentación interactiva OpenAPI v3 y la prueba de los endpoints REST 
 | **DashboardController** | `GET` | `/api/v1/dashboard/summary` | Resumen de pendientes, vencidas, racha máxima y estado de mascota. |
 | | `GET` | `/api/v1/dashboard/weekly-stats` | Estadísticas semanales de tareas y hábitos por día. |
 | | `GET` | `/api/v1/dashboard/pet-history` | 10 eventos más recientes de la mascota. |
+
+---
+
+## 🧪 Pruebas con Postman
+
+En la carpeta `postman/` se incluyen los archivos listos para importar en Postman:
+1. `postman/taskgotchi.postman_collection.json`: Colección v2.1 con 12 solicitudes de verificación.
+2. `postman/taskgotchi.postman_environment.json`: Entorno local con la variable `baseUrl` (`http://localhost:8080`).
+
+### 12 Escenarios Cubiertos
+1. **Crear tarea válida**: `201 Created` con cabecera `Location` e ID almacenado dinámicamente.
+2. **Consultar tarea creada**: `200 OK` por ID.
+3. **Listar tareas con paginación y orden**: `200 OK` (`page=0`, `size=10`, `sort=id,asc`).
+4. **Buscar tarea por título**: `200 OK` (`?title=Examen`).
+5. **Actualizar tarea**: `200 OK` comprobando `actualizadoEn` (`updatedAt`).
+6. **Validación de campos obligatorios vacíos**: `400 Bad Request` con DTO de error uniforme.
+7. **JSON mal formado / enum inválido**: `400 Bad Request`.
+8. **Identificador inexistente**: `404 Not Found`.
+9. **Duplicado / Conflicto**: `409 Conflict` (o `422`).
+10. **Incumplimiento de regla de negocio**: `422 Unprocessable Entity`.
+11. **Método no admitido**: `405 Method Not Allowed`.
+12. **Eliminar tarea**: `204 No Content` y verificación posterior en `404 Not Found`.
+
+---
+
+## 📸 Lista de Evidencias para el Estudiante
+
+Para la entrega académica del laboratorio, el estudiante debe tomar y adjuntar las siguientes capturas de pantalla:
+1. **Arranque del Backend**: Consola de Spring Boot con inicio exitoso en puerto `8080` conectado a PostgreSQL.
+2. **Base de Datos PostgreSQL**: Consulta SQL en pgAdmin/psql mostrando la tabla `tasks` con los campos `created_at` y `updated_at`.
+3. **Swagger UI**: Interfaz gráfica en `/swagger-ui.html` mostrando los controladores y endpoints desplegados.
+4. **Resultados de Postman**: Ejecución del Runner de Postman con los 12 casos en verde.
+5. **Errores Negativos**: Captura de respuesta HTTP 400, 404, 405 y 422 con formato JSON `ApiError`.
+6. **Historial Git**: Ejecución en consola del comando:
+   ```bash
+   git log --oneline -n 10
+   ```
 
 ---
 

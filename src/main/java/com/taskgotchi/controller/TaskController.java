@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -23,20 +24,21 @@ import java.time.LocalDateTime;
 @RestController
 @RequestMapping("/api/v1/tasks")
 @RequiredArgsConstructor
-@Tag(name = "Tareas", description = "Endpoints para el CRUD de tareas, filtrado y completación con recompensas")
+@Tag(name = "Tareas", description = "Endpoints para el CRUD de tareas, filtrado, búsqueda por título y completación con recompensas")
 public class TaskController {
 
     private final TaskService taskService;
 
     @GetMapping
-    @Operation(summary = "Listar tareas paginadas y filtradas", description = "Permite filtrar tareas por estado, categoría, prioridad y fecha límite con paginación.")
+    @Operation(summary = "Listar tareas paginadas y filtradas", description = "Permite listar tareas con paginación (defecto page=0, size=10, sort=id,asc), búsqueda por título y filtros opcionales.")
     public ResponseEntity<Page<TaskResponse>> getTasks(
             @RequestParam(required = false) TaskStatus status,
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) TaskPriority priority,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime dueBefore,
-            @PageableDefault(size = 20) Pageable pageable) {
-        return ResponseEntity.ok(taskService.getTasks(status, categoryId, priority, dueBefore, pageable));
+            @RequestParam(required = false) String title,
+            @PageableDefault(page = 0, size = 10, sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
+        return ResponseEntity.ok(taskService.getTasks(status, categoryId, priority, dueBefore, title, pageable));
     }
 
     @GetMapping("/{id}")

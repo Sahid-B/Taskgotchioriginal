@@ -26,6 +26,8 @@ public class TaskMapper {
                 task.getXpReward(),
                 task.getCoinReward(),
                 task.getCompletedAt(),
+                task.getCreatedAt(),
+                task.getUpdatedAt(),
                 task.getBoss() != null ? task.getBoss().getId() : null,
                 task.getParentTask() != null ? task.getParentTask().getId() : null
         );

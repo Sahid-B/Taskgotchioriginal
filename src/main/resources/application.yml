@@ -4,7 +4,7 @@ spring:
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:taskgotchidb}}
     username: ${DB_USER:postgres}
-    password: ${DB_PASSWORD:postgres}
+    password: ${DB_PASSWORD}
     driver-class-name: ${DB_DRIVER:org.postgresql.Driver}
   jpa:
     open-in-view: false
@@ -16,15 +16,14 @@ spring:
         format_sql: true
 
 server:
-  port: 8080
+  address: 127.0.0.1
+  port: ${SERVER_PORT:8080}
   error:
     include-stacktrace: never
 
 taskgotchi:
   cors:
-    allowed-origins:
-      - http://localhost:5173
-      - http://localhost:3000
+    allowed-origins: ${CORS_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}
   pet:
     xp-thresholds:
       baby: 100
@@ -38,6 +37,7 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
     operationsSorter: method
+  override-with-generic-response: false
 
 ---
 spring:

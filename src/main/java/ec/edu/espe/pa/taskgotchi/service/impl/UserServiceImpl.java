@@ -5,7 +5,7 @@ import ec.edu.espe.pa.taskgotchi.dto.UserResponse;
 import ec.edu.espe.pa.taskgotchi.exception.BusinessRuleException;
 import ec.edu.espe.pa.taskgotchi.exception.ResourceNotFoundException;
 import ec.edu.espe.pa.taskgotchi.mapper.UserMapper;
-import ec.edu.espe.pa.taskgotchi.model.User;
+import ec.edu.espe.pa.taskgotchi.entity.User;
 import ec.edu.espe.pa.taskgotchi.repository.UserRepository;
 import ec.edu.espe.pa.taskgotchi.security.CurrentUserProvider;
 import ec.edu.espe.pa.taskgotchi.service.UserService;

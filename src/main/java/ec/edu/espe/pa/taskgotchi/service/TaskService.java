@@ -3,8 +3,8 @@ package ec.edu.espe.pa.taskgotchi.service;
 import ec.edu.espe.pa.taskgotchi.dto.PageResponse;
 import ec.edu.espe.pa.taskgotchi.dto.TaskRequest;
 import ec.edu.espe.pa.taskgotchi.dto.TaskResponse;
-import ec.edu.espe.pa.taskgotchi.model.TaskPriority;
-import ec.edu.espe.pa.taskgotchi.model.TaskStatus;
+import ec.edu.espe.pa.taskgotchi.entity.TaskPriority;
+import ec.edu.espe.pa.taskgotchi.entity.TaskStatus;
 import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;

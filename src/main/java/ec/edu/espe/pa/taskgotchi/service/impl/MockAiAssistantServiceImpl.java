@@ -5,7 +5,7 @@ import ec.edu.espe.pa.taskgotchi.dto.DailyMissionResponse;
 import ec.edu.espe.pa.taskgotchi.dto.PetMessageRequest;
 import ec.edu.espe.pa.taskgotchi.dto.SplitTaskRequest;
 import ec.edu.espe.pa.taskgotchi.dto.SplitTaskResponse;
-import ec.edu.espe.pa.taskgotchi.model.Pet;
+import ec.edu.espe.pa.taskgotchi.entity.Pet;
 import ec.edu.espe.pa.taskgotchi.repository.PetRepository;
 import ec.edu.espe.pa.taskgotchi.security.CurrentUserProvider;
 import ec.edu.espe.pa.taskgotchi.service.AiAssistantService;

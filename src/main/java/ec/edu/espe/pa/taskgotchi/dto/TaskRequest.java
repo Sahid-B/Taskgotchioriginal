@@ -1,7 +1,7 @@
 package ec.edu.espe.pa.taskgotchi.dto;
 
-import ec.edu.espe.pa.taskgotchi.model.TaskDifficulty;
-import ec.edu.espe.pa.taskgotchi.model.TaskPriority;
+import ec.edu.espe.pa.taskgotchi.entity.TaskDifficulty;
+import ec.edu.espe.pa.taskgotchi.entity.TaskPriority;
 import jakarta.validation.constraints.*;
 
 import java.math.BigDecimal;

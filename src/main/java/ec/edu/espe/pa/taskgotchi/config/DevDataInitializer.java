@@ -1,7 +1,7 @@
 package ec.edu.espe.pa.taskgotchi.config;
 
-import ec.edu.espe.pa.taskgotchi.model.Pet;
-import ec.edu.espe.pa.taskgotchi.model.User;
+import ec.edu.espe.pa.taskgotchi.entity.Pet;
+import ec.edu.espe.pa.taskgotchi.entity.User;
 import ec.edu.espe.pa.taskgotchi.repository.PetRepository;
 import ec.edu.espe.pa.taskgotchi.repository.UserRepository;
 import lombok.RequiredArgsConstructor;

@@ -3,8 +3,8 @@ package ec.edu.espe.pa.taskgotchi.mapper;
 import ec.edu.espe.pa.taskgotchi.dto.HabitLogResponse;
 import ec.edu.espe.pa.taskgotchi.dto.HabitRequest;
 import ec.edu.espe.pa.taskgotchi.dto.HabitResponse;
-import ec.edu.espe.pa.taskgotchi.model.Habit;
-import ec.edu.espe.pa.taskgotchi.model.HabitLog;
+import ec.edu.espe.pa.taskgotchi.entity.Habit;
+import ec.edu.espe.pa.taskgotchi.entity.HabitLog;
 import org.springframework.stereotype.Component;
 
 @Component

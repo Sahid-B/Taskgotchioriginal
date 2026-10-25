@@ -2,8 +2,8 @@ package ec.edu.espe.pa.taskgotchi.mapper;
 
 import ec.edu.espe.pa.taskgotchi.dto.PetEventResponse;
 import ec.edu.espe.pa.taskgotchi.dto.PetResponse;
-import ec.edu.espe.pa.taskgotchi.model.Pet;
-import ec.edu.espe.pa.taskgotchi.model.PetEvent;
+import ec.edu.espe.pa.taskgotchi.entity.Pet;
+import ec.edu.espe.pa.taskgotchi.entity.PetEvent;
 import org.springframework.stereotype.Component;
 
 @Component

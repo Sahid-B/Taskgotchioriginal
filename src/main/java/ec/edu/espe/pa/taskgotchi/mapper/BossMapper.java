@@ -3,8 +3,8 @@ package ec.edu.espe.pa.taskgotchi.mapper;
 import ec.edu.espe.pa.taskgotchi.dto.BossResponse;
 import ec.edu.espe.pa.taskgotchi.dto.CreateBossRequest;
 import ec.edu.espe.pa.taskgotchi.dto.TaskResponse;
-import ec.edu.espe.pa.taskgotchi.model.Boss;
-import ec.edu.espe.pa.taskgotchi.model.Task;
+import ec.edu.espe.pa.taskgotchi.entity.Boss;
+import ec.edu.espe.pa.taskgotchi.entity.Task;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

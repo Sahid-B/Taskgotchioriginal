@@ -7,7 +7,7 @@ import ec.edu.espe.pa.taskgotchi.exception.BusinessRuleException;
 import ec.edu.espe.pa.taskgotchi.exception.DuplicateResourceException;
 import ec.edu.espe.pa.taskgotchi.exception.ResourceNotFoundException;
 import ec.edu.espe.pa.taskgotchi.mapper.TaskMapper;
-import ec.edu.espe.pa.taskgotchi.model.*;
+import ec.edu.espe.pa.taskgotchi.entity.*;
 import ec.edu.espe.pa.taskgotchi.repository.BossRepository;
 import ec.edu.espe.pa.taskgotchi.repository.CategoryRepository;
 import ec.edu.espe.pa.taskgotchi.repository.TaskRepository;

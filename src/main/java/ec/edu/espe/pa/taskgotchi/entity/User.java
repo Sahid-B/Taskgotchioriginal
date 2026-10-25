@@ -1,4 +1,4 @@
-package ec.edu.espe.pa.taskgotchi.model;
+package ec.edu.espe.pa.taskgotchi.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -6,28 +6,26 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "pet_events")
+@Table(name = "users")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class PetEvent {
+public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "pet_id", nullable = false)
-    private Pet pet;
+    @Column(nullable = false, unique = true, length = 50)
+    private String username;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 30)
-    private PetEventType type;
+    @Column(nullable = false, unique = true, length = 100)
+    private String email;
 
-    @Column(nullable = false, length = 255)
-    private String description;
+    @Column(nullable = false)
+    private String passwordHash;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;

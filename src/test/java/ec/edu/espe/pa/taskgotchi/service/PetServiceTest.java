@@ -1,9 +1,9 @@
 package ec.edu.espe.pa.taskgotchi.service;
 
 import ec.edu.espe.pa.taskgotchi.mapper.PetMapper;
-import ec.edu.espe.pa.taskgotchi.model.Pet;
-import ec.edu.espe.pa.taskgotchi.model.PetStage;
-import ec.edu.espe.pa.taskgotchi.model.User;
+import ec.edu.espe.pa.taskgotchi.entity.Pet;
+import ec.edu.espe.pa.taskgotchi.entity.PetStage;
+import ec.edu.espe.pa.taskgotchi.entity.User;
 import ec.edu.espe.pa.taskgotchi.repository.PetEventRepository;
 import ec.edu.espe.pa.taskgotchi.repository.PetRepository;
 import ec.edu.espe.pa.taskgotchi.repository.UserRepository;

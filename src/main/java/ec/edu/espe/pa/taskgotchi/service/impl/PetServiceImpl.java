@@ -5,7 +5,7 @@ import ec.edu.espe.pa.taskgotchi.dto.PetResponse;
 import ec.edu.espe.pa.taskgotchi.exception.BusinessRuleException;
 import ec.edu.espe.pa.taskgotchi.exception.ResourceNotFoundException;
 import ec.edu.espe.pa.taskgotchi.mapper.PetMapper;
-import ec.edu.espe.pa.taskgotchi.model.*;
+import ec.edu.espe.pa.taskgotchi.entity.*;
 import ec.edu.espe.pa.taskgotchi.repository.PetEventRepository;
 import ec.edu.espe.pa.taskgotchi.repository.PetRepository;
 import ec.edu.espe.pa.taskgotchi.repository.UserRepository;

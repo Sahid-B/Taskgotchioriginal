@@ -1,19 +1,19 @@
 package ec.edu.espe.pa.taskgotchi.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import ec.edu.espe.pa.taskgotchi.config.SecurityConfig;
 import ec.edu.espe.pa.taskgotchi.dto.PageResponse;
 import ec.edu.espe.pa.taskgotchi.dto.TaskRequest;
 import ec.edu.espe.pa.taskgotchi.dto.TaskResponse;
 import ec.edu.espe.pa.taskgotchi.exception.DuplicateResourceException;
-import ec.edu.espe.pa.taskgotchi.model.TaskDifficulty;
-import ec.edu.espe.pa.taskgotchi.model.TaskPriority;
-import ec.edu.espe.pa.taskgotchi.model.TaskStatus;
+import ec.edu.espe.pa.taskgotchi.entity.TaskDifficulty;
+import ec.edu.espe.pa.taskgotchi.entity.TaskPriority;
+import ec.edu.espe.pa.taskgotchi.entity.TaskStatus;
 import ec.edu.espe.pa.taskgotchi.service.TaskService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -40,7 +40,7 @@ class TaskControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @MockBean
+    @MockitoBean
     private TaskService taskService;
 
     @Test

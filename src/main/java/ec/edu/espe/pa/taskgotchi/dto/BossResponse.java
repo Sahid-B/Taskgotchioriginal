@@ -1,6 +1,6 @@
 package ec.edu.espe.pa.taskgotchi.dto;
 
-import ec.edu.espe.pa.taskgotchi.model.BossStatus;
+import ec.edu.espe.pa.taskgotchi.entity.BossStatus;
 
 import java.util.List;
 

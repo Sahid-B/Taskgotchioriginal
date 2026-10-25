@@ -2,7 +2,7 @@ package ec.edu.espe.pa.taskgotchi.mapper;
 
 import ec.edu.espe.pa.taskgotchi.dto.TaskRequest;
 import ec.edu.espe.pa.taskgotchi.dto.TaskResponse;
-import ec.edu.espe.pa.taskgotchi.model.Task;
+import ec.edu.espe.pa.taskgotchi.entity.Task;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

@@ -26,7 +26,6 @@ public class DevDataInitializer {
         return args -> {
             if (!userRepository.existsById(1L) && !userRepository.existsByUsername("devstudent")) {
                 User user = User.builder()
-                        .id(1L)
                         .username("devstudent")
                         .email("student@espe.edu.ec")
                         .passwordHash(passwordEncoder.encode("devpassword123"))

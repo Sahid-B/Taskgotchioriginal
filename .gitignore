@@ -14,4 +14,6 @@ tools/node_modules/
 frontend/dist/
 .local/
 .env
+.postman/
+postman/globals/
 evidence/private/

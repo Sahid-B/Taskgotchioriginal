@@ -28,7 +28,7 @@ public class DevDataInitializer {
                 User user = User.builder()
                         .username("devstudent")
                         .email("student@espe.edu.ec")
-                        .passwordHash(passwordEncoder.encode("devpassword123"))
+                        .passwordHash(passwordEncoder.encode(java.util.UUID.randomUUID().toString()))
                         .build();
                 user = userRepository.save(user);
 

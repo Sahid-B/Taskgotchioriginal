@@ -1,177 +1,97 @@
-# Taskgotchi - Laboratorio 1.2 Programación Avanzada
+# Taskgotchi
+Aplicación de productividad para estudiantes: convierte tareas y hábitos en misiones,
+gana experiencia y monedas y cuida una mascota virtual. Los proyectos grandes se
+representan como jefes cuya vida disminuye al completar las misiones asociadas.
 
-**Paquete Base**: `ec.edu.espe.pa.taskgotchi`
-**Tecnologías**: Java 21 | Spring Boot 3.2.3 | Spring Data JPA | PostgreSQL 16 | React + TypeScript + Vite (`frontend/`)
+## Ejecutar en Windows
+Requisitos: JDK 21, Node.js, Docker Desktop encendido.
 
-Taskgotchi es una plataforma web orientada a estudiantes que gestiona tareas, hábitos y proyectos grandes (jefes finales) mientras cuidan una mascota virtual en 2D que refleja dinámicamente su nivel de productividad y constancia.
-
----
-
-## 🏛️ Arquitectura por Capas (`ec.edu.espe.pa.taskgotchi`)
-
-El backend está organizado de forma desacoplada y estricta:
-
-- `controller`: Controladores REST (`@RestController`) que procesan peticiones/respuestas HTTP usando DTOs.
-- `service`: Interfaces y clases de implementación (`service/impl`) con la lógica de negocio y transacciones `@Transactional`.
-- `repository`: Repositorios Spring Data JPA con consultas derivadas y soporte de paginación/especificaciones.
-- `model`: Entidades JPA (`Task`, `User`, `Pet`, `Habit`, `Boss`, etc.) y enums guardados como texto.
-- `dto`: Records DTO para entrada, salida (`TaskResponse`, `PageResponse`) y respuestas de error uniformes (`ApiError`).
-- `mapper`: Componentes Spring para conversión bidireccional entre Entidades y DTOs.
-- `exception`: Excepciones de dominio (`ResourceNotFoundException`, `DuplicateResourceException`, `BusinessRuleException`) y manejador centralizado `@RestControllerAdvice`.
-- `config`: Configuraciones de OpenAPI/Swagger UI, CORS, Web MVC, Security esqueleto e inicializador de desarrollo (`DevDataInitializer`).
-- `security`: Abstracción `CurrentUserProvider` / `DevCurrentUserProvider` (ID 1L).
-
----
-
-## ⚙️ Configuración y Ejecución en Windows
-
-### 1. Preparación de PostgreSQL 16
-1. Instalar PostgreSQL 16 y verificar ejecucion en puerto `5432`.
-2. Crear la base de datos `taskgotchidb`:
-   ```sql
-   CREATE DATABASE taskgotchidb;
-   ```
-3. Configurar variables de entorno (sin exponer contraseñas en código):
-   **PowerShell:**
-   ```powershell
-   $env:DB_HOST="localhost"
-   $env:DB_PORT="5432"
-   $env:DB_NAME="taskgotchidb"
-   $env:DB_USER="postgres"
-   $env:DB_PASSWORD="tu_password_aqui"
-   ```
-   **CMD:**
-   ```cmd
-   set DB_HOST=localhost
-   set DB_PORT=5432
-   set DB_NAME=taskgotchidb
-   set DB_USER=postgres
-   set DB_PASSWORD=tu_password_aqui
-   ```
-
-### 2. Ejecutar el Backend (Spring Boot)
-En la raíz del proyecto usando el Maven Wrapper:
-```cmd
-.\mvnw.cmd spring-boot:run
+Desde la raíz, en una terminal PowerShell:
+```powershell
+.\scripts\start-backend.ps1
 ```
-*(Para pruebas locales con H2 en memoria, ejecutar: `.\mvnw.cmd spring-boot:run -Dspring-boot.run.profiles=h2`)*
+El script solicita la clave del contenedor local mediante entrada oculta.
+La clave debe coincidir con la empleada al crear el volumen de PostgreSQL.
+Las credenciales solo se pasan por variables de entorno. No se incluyen en Git.
 
-El backend estará disponible en `http://localhost:8080`.
-
-- **Swagger UI**: `http://localhost:8080/swagger-ui.html`
-- **OpenAPI JSON**: `http://localhost:8080/v3/api-docs`
-
-### 3. Ejecutar el Frontend (React + Vite)
-En una nueva terminal, acceder a `frontend/`:
-```cmd
-cd frontend
-npm install
-npm run dev
+En otra terminal:
+```powershell
+.\scripts\start-web.ps1
 ```
-El frontend web estará disponible en `http://localhost:5173`.
+Interfaz: http://localhost:5173
+Swagger: http://localhost:8080/swagger-ui/index.html
+Base: PostgreSQL 16, taskgotchidb, usuario taskgotchi, host localhost, puerto 5433.
+Datos persistentes: volumen Docker proyecto_taskgotchi-data.
+Los registros sobreviven al reinicio del backend y del contenedor.
 
----
-
-## 📋 Contrato REST de Tareas (`/api/v1/tasks`)
-
-| Método | Endpoint | Descripción | Estado HTTP |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/api/v1/tasks` | Listado paginado de tareas (`page=0`, `size=10`, `sort=id,asc`) | `200 OK` |
-| `GET` | `/api/v1/tasks/buscar?title=...` | Búsqueda paginada por título (parámetro `title` obligatorio) | `200 OK` (o `400 Bad Request` si falta `title`) |
-| `GET` | `/api/v1/tasks/{id}` | Consulta de tarea por ID | `200 OK` / `404 Not Found` |
-| `POST` | `/api/v1/tasks` | Creación de tarea con `code` único, `estimatedHours` y `active` | `201 Created` + `Location` header |
-| `PUT` | `/api/v1/tasks/{id}` | Actualización completa con soporte de `bossId` y `parentTaskId` | `200 OK` |
-| `DELETE` | `/api/v1/tasks/{id}` | Eliminación de tarea | `204 No Content` |
-| `PATCH` | `/api/v1/tasks/{id}/complete` | Completar tarea (otorga XP/Monedas a la mascota y daña al jefe) | `200 OK` / `422 Unprocessable` |
-
----
-
-## ⚠️ Formato Uniforme de Error (`ApiError`)
-
-Todas las respuestas de error devuelven exactamente **6 claves**:
-```json
-{
-  "timestamp": "2026-10-23T18:00:00.123",
-  "status": 400,
-  "error": "Bad Request",
-  "message": "Error de validación en los campos ingresados",
-  "path": "/api/v1/tasks",
-  "errors": [
-    "code: El código de la tarea es obligatorio",
-    "estimatedHours: Las horas estimadas deben ser un valor positivo"
-  ]
-}
+Para una demostración temporal sin PostgreSQL:
+```powershell
+.\scripts\start-backend.ps1 -Demo
 ```
-*(Si no hay errores de campos por Bean Validation, `errors` se devuelve como `[]`)*
+El perfil h2 utiliza una base en memoria y pierde sus datos al apagarlo.
 
-### Mapeo de Códigos HTTP
-- `400 Bad Request`: Campos inválidos, JSON mal formado, enum inválido o falta de parámetro obligatorio (`title`).
-- `404 Not Found`: Tarea o recurso inexistente.
-- `405 Method Not Allowed`: Método HTTP no soportado (ej. PATCH en `/api/v1/tasks/{id}`).
-- `409 Conflict`: Código de tarea duplicado (`code`) para el mismo usuario.
-- `422 Unprocessable Entity`: Violación de regla de negocio (ej. editar tarea ya completada).
-- `500 Internal Server Error`: Error inesperado registrado en el log.
+## Qué funciona
+- Mundo 2D jugable: A/D o flechas para moverse, espacio para saltar y E para
+  interactuar cerca de cocina, tablón, taller, fogata o portal. También tiene controles táctiles.
+- Misiones: crear, buscar, filtrar, paginar, editar, completar y eliminar.
+- Dificultad: fácil 20 XP/10 monedas; media 50/25; difícil 100/60.
+- Hábitos diarios: un cumplimiento por día, rachas y bonificación.
+- Mascota: saciedad, ánimo, energía, cuidados, evolución y bitácora.
+- Jefes: crear proyectos, asociar misiones y recibir 150 XP/100 monedas al derrotarlos.
+- Interfaz adaptable con mascota SVG animada y temporizador de enfoque.
 
----
+El personaje explora el bosque acompañado por Gotchi. El mundo se dibuja con
+Canvas; el progreso y las recompensas se consultan y guardan en la API. Caminar
+y saltar no otorgan recompensas: el jugador entrega una misión cuando la realizó
+en la vida real. Mi progreso conserva el panel de estadísticas y el temporizador.
 
-## 🧪 Verificación con Postman Collection v2.1
+El modo actual es **local de un jugador**; el usuario de desarrollo está identificado
+por DevCurrentUserProvider. El login JWT, multijugador y una IA externa no forman
+parte de esta versión. La API no debe exponerse públicamente en este modo.
 
-Archivos disponibles en `postman/`:
-- `postman/taskgotchi.postman_collection.json`
-- `postman/taskgotchi.postman_environment.json`
+## Laboratorio
+Java 21 · Spring Boot 4.1.2 · Spring MVC · Spring Data JPA · PostgreSQL 16 · React/TypeScript/Vite.
+Paquete: ec.edu.espe.pa.taskgotchi.
+Capas: controller → service → repository; entity, dto, mapper, exception y config.
 
-Organizada en dos carpetas principales:
-- **`01-Casos exitosos`**:
-  - `E1`: Crear tarea válida (`201 Created`, cabecera `Location`, guarda `createdTaskId`).
-  - `E2`: Consultar por ID (`200 OK`).
-  - `E3`: Listar con paginación y orden (`200 OK`, valida estructura `content` y `page`).
-  - `E4`: Buscar por título (`200 OK`).
-  - `E5`: Actualizar tarea (`200 OK`, comprueba `updatedAt`).
-  - `E6`: Eliminar tarea (`204 No Content` y posterior `404 Not Found`).
-- **`02-Casos negativos`**:
-  - `N1`: Campos vacíos/fuera de rango (`400 Bad Request` + 6 claves en `ApiError`).
-  - `N2`: JSON mal formado / Enum inválido (`400 Bad Request`).
-  - `N3`: ID no numérico (`400 Bad Request`).
-  - `N4`: ID inexistente (`404 Not Found`).
-  - `N5`: Código de tarea duplicado (`409 Conflict`).
-  - `N6`: Regla de negocio: Editar tarea completada (`422 Unprocessable Entity`).
-  - `N7`: PATCH no soportado a `/api/v1/tasks/{id}` (`405 Method Not Allowed`).
+Contrato principal:
+| Método | Ruta | Resultado |
+|---|---|---|
+| GET | /api/v1/tasks?page=0&size=10&sort=id,asc | 200, content y page |
+| GET | /api/v1/tasks/buscar?title=texto | 200, búsqueda sin distinguir mayúsculas |
+| GET | /api/v1/tasks/{id} | 200 o 404 |
+| POST | /api/v1/tasks | 201 y Location |
+| PUT | /api/v1/tasks/{id} | 200; actualización completa |
+| DELETE | /api/v1/tasks/{id} | 204, sin cuerpo |
+| PATCH | /api/v1/tasks/{id}/complete | 200, recompensas una sola vez |
 
----
+Errores uniformes: timestamp, status, error, message, path, errors.
+Validación 400; inexistencia 404; método no soportado 405; duplicado 409;
+regla de negocio 422. La fecha límite admite tareas vencidas.
+No se puede editar una misión completada ni completar una inactiva.
 
-## 🔍 Verificación de Persistencia en PostgreSQL
+## Verificar
+```powershell
+.\mvnw.cmd --batch-mode --no-transfer-progress test
+npm.cmd --prefix frontend run build
+npm.cmd --prefix tools ci --no-audit --no-fund
+npm.cmd --prefix tools run lab
+```
+La última orden usa Newman para ejecutar la misma colección exportable de Postman.
+Los resultados quedan en evidence/newman-run.json y evidence/lab-summary.json.
+El Collection Runner de Postman usa los archivos de postman/ y el entorno PA-Lab2-local.
+La colección controla el orden para ejecutar la eliminación al final.
 
-Para verificar que los datos sobreviven al reinicio de la aplicación antes de ser eliminados:
-1. Iniciar la aplicación y ejecutar la petición `E1: Crear tarea válida` en Postman.
-2. Desde pgAdmin o `psql`, ejecutar:
-   ```sql
-   SELECT id, code, title, estimated_hours, active, created_at, updated_at FROM tasks;
-   ```
-3. Detener la aplicación (`Ctrl + C`) y volver a iniciarla (`.\mvnw.cmd spring-boot:run`).
-4. Volver a ejecutar la consulta SQL en PostgreSQL y comprobar que la fila permanece intacta.
+Consulta de persistencia:
+```powershell
+docker exec taskgotchi-postgres psql -U taskgotchi -d taskgotchidb -c "SELECT id, code, title FROM tasks ORDER BY id;"
+```
+La configuración ddl-auto=update se limita al laboratorio. Para producción se
+recomiendan migraciones versionadas con Flyway/Liquibase y ddl-auto=validate.
 
----
-
-## 📸 Lista de Evidencias para el Informe Académico
-
-1. **Arranque de Backend**: Consola mostrando Spring Boot iniciado en puerto `8080` con la conexión a PostgreSQL.
-2. **Estructura de Tabla PostgreSQL**: Captura de pgAdmin/psql describiendo la tabla `tasks` con campos `code`, `estimated_hours`, `active`, `created_at` y `updated_at`.
-3. **Persistencia tras Reinicio**: Captura de la consulta `SELECT` antes y después de reiniciar Spring Boot.
-4. **Postman Runner**: Ejecución de la colección completa en Postman con todas las pruebas automáticas en verde.
-5. **Respuestas de Error Negativas**: Capturas mostrando el formato JSON uniforme `ApiError` de 6 claves para respuestas 400, 404, 405, 409 y 422.
-6. **Historial de Commits**: Ejecución en terminal del comando:
-   ```bash
-   git log --oneline -n 10
-   ```
-
----
-
-## 🔮 Siguiente Unidad (Roadmap de TODOs)
-
-1. **JWT y Autenticación Real**:
-   - Reemplazar `DevCurrentUserProvider` (ID 1L) por la extracción del usuario autenticado desde `SecurityContextHolder.getContext().getAuthentication()`.
-   - Implementar `JwtTokenProvider` y `JwtAuthenticationFilter` en `config/SecurityConfig.java`.
-2. **Interceptores de Auditoría y Monitoreo**:
-   - Completar `RequestMonitoringInterceptor.java` y `AuditInterceptor.java` en `config/WebMvcConfig.java`.
-3. **Integración con IA Real**:
-   - Reemplazar `MockAiAssistantServiceImpl` por integración real de Spring AI con OpenAI/Claude.
+## Cerrar
+Ctrl+C en las terminales del backend y la web, después:
+```powershell
+docker stop taskgotchi-postgres
+```
+No borrar el volumen. Más detalles de entrega: docs/ENTREGA.md.

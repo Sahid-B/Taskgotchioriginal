@@ -15,6 +15,9 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -62,7 +65,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
-    @ExceptionHandler({ResourceNotFoundException.class, NoHandlerFoundException.class})
+    @ExceptionHandler({ResourceNotFoundException.class, NoHandlerFoundException.class, NoResourceFoundException.class})
     public ResponseEntity<ApiError> handleNotFoundException(Exception ex, HttpServletRequest request) {
         ApiError error = new ApiError(
                 HttpStatus.NOT_FOUND.value(),
@@ -120,5 +123,22 @@ public class GlobalExceptionHandler {
                 request.getRequestURI()
         );
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiError> invalidArgument(IllegalArgumentException ex, HttpServletRequest request) {
+        return ResponseEntity.badRequest().body(new ApiError(400, "Bad Request", ex.getMessage(), request.getRequestURI()));
+    }
+
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<ApiError> concurrentChange(Exception ex, HttpServletRequest request) {
+        return ResponseEntity.status(409).body(new ApiError(409, "Conflict",
+                "El recurso cambió durante la operación. Actualice e intente nuevamente", request.getRequestURI()));
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<ApiError> mediaType(Exception ex, HttpServletRequest request) {
+        return ResponseEntity.status(415).body(new ApiError(415, "Unsupported Media Type",
+                "Utilice Content-Type: application/json", request.getRequestURI()));
     }
 }

@@ -2,7 +2,7 @@ package ec.edu.espe.pa.taskgotchi.mapper;
 
 import ec.edu.espe.pa.taskgotchi.dto.CategoryRequest;
 import ec.edu.espe.pa.taskgotchi.dto.CategoryResponse;
-import ec.edu.espe.pa.taskgotchi.model.Category;
+import ec.edu.espe.pa.taskgotchi.entity.Category;
 import org.springframework.stereotype.Component;
 
 @Component

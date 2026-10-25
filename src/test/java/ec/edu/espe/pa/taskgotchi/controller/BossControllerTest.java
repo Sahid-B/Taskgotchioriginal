@@ -1,15 +1,15 @@
 package ec.edu.espe.pa.taskgotchi.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import ec.edu.espe.pa.taskgotchi.config.SecurityConfig;
 import ec.edu.espe.pa.taskgotchi.dto.BossResponse;
 import ec.edu.espe.pa.taskgotchi.dto.CreateBossRequest;
-import ec.edu.espe.pa.taskgotchi.model.BossStatus;
+import ec.edu.espe.pa.taskgotchi.entity.BossStatus;
 import ec.edu.espe.pa.taskgotchi.service.BossService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -32,7 +32,7 @@ class BossControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @MockBean
+    @MockitoBean
     private BossService bossService;
 
     @Test

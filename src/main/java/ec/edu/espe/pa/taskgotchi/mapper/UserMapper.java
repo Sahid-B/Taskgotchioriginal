@@ -1,7 +1,7 @@
 package ec.edu.espe.pa.taskgotchi.mapper;
 
 import ec.edu.espe.pa.taskgotchi.dto.UserResponse;
-import ec.edu.espe.pa.taskgotchi.model.User;
+import ec.edu.espe.pa.taskgotchi.entity.User;
 import org.springframework.stereotype.Component;
 
 @Component

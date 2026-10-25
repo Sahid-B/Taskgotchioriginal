@@ -1,7 +1,7 @@
 package ec.edu.espe.pa.taskgotchi.repository;
 
-import ec.edu.espe.pa.taskgotchi.model.Task;
-import ec.edu.espe.pa.taskgotchi.model.TaskStatus;
+import ec.edu.espe.pa.taskgotchi.entity.Task;
+import ec.edu.espe.pa.taskgotchi.entity.TaskStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;

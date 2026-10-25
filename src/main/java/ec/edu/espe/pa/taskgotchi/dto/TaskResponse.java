@@ -1,8 +1,8 @@
 package ec.edu.espe.pa.taskgotchi.dto;
 
-import ec.edu.espe.pa.taskgotchi.model.TaskDifficulty;
-import ec.edu.espe.pa.taskgotchi.model.TaskPriority;
-import ec.edu.espe.pa.taskgotchi.model.TaskStatus;
+import ec.edu.espe.pa.taskgotchi.entity.TaskDifficulty;
+import ec.edu.espe.pa.taskgotchi.entity.TaskPriority;
+import ec.edu.espe.pa.taskgotchi.entity.TaskStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

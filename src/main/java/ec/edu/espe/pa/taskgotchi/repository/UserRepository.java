@@ -1,6 +1,6 @@
 package ec.edu.espe.pa.taskgotchi.repository;
 
-import ec.edu.espe.pa.taskgotchi.model.User;
+import ec.edu.espe.pa.taskgotchi.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

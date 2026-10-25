@@ -1,6 +1,6 @@
 package ec.edu.espe.pa.taskgotchi.dto;
 
-import ec.edu.espe.pa.taskgotchi.model.PetStage;
+import ec.edu.espe.pa.taskgotchi.entity.PetStage;
 
 import java.time.LocalDateTime;
 

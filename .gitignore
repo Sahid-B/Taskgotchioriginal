@@ -9,3 +9,8 @@ target/
 .classpath
 .project
 *.log
+frontend/node_modules/
+frontend/dist/
+.local/
+.env
+evidence/private/

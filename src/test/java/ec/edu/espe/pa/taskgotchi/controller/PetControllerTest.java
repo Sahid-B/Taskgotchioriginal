@@ -2,12 +2,12 @@ package ec.edu.espe.pa.taskgotchi.controller;
 
 import ec.edu.espe.pa.taskgotchi.config.SecurityConfig;
 import ec.edu.espe.pa.taskgotchi.dto.PetResponse;
-import ec.edu.espe.pa.taskgotchi.model.PetStage;
+import ec.edu.espe.pa.taskgotchi.entity.PetStage;
 import ec.edu.espe.pa.taskgotchi.service.PetService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -25,7 +25,7 @@ class PetControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     private PetService petService;
 
     @Test

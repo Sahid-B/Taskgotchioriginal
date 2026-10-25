@@ -1,8 +1,8 @@
 {
   "info": {
     "_postman_id": "lab12-taskgotchi-postman-collection",
-    "name": "Taskgotchi API - Laboratorio 1.2 Programación Avanzada",
-    "description": "Colección de Postman v2.1 organizada en 01-Casos exitosos y 02-Casos negativos para verificar el CRUD de Tareas, búsqueda por título, duplicados 409, reglas de negocio 422 y formato uniforme ApiError de 6 claves.",
+    "name": "PA-Lab2-Romero-Taskgotchi",
+    "description": "Ejecución autónoma: E1-E5, N1-N9, E6. Los scripts controlan el orden para conservar el registro hasta comprobar duplicados, regla de negocio y eliminación. Sin credenciales.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -25,7 +25,7 @@
                   "var jsonData = pm.response.json();",
                   "pm.test('Contains created ID, code, title and estimatedHours', function () {",
                   "    pm.expect(jsonData.id).to.be.a('number');",
-                  "    pm.expect(jsonData.code).to.eql('LAB12-TSK1');",
+                  "    pm.expect(jsonData.code).to.eql(pm.environment.get('taskCode'));",
                   "    pm.expect(jsonData.title).to.eql('Estudiar Examen Final Programación');",
                   "    pm.expect(jsonData.estimatedHours).to.eql(3.5);",
                   "    pm.expect(jsonData.active).to.eql(true);",
@@ -41,16 +41,25 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"code\": \"LAB12-TSK1\",\n  \"title\": \"Estudiar Examen Final Programación\",\n  \"description\": \"Repasar Spring Boot, JPA y Postgres\",\n  \"estimatedHours\": 3.5,\n  \"active\": true,\n  \"priority\": \"HIGH\",\n  \"difficulty\": \"HARD\",\n  \"dueDate\": \"2026-11-30T23:59:59\"\n}"
+              "raw": "{\n  \"code\": \"{{taskCode}}\",\n  \"title\": \"Estudiar Examen Final Programación\",\n  \"description\": \"Repasar Spring Boot, JPA y Postgres\",\n  \"estimatedHours\": 3.5,\n  \"active\": true,\n  \"priority\": \"HIGH\",\n  \"difficulty\": \"HARD\",\n  \"dueDate\": \"2026-11-30T23:59:59\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/tasks",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "tasks"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tasks"
+              ]
             }
           }
         },
@@ -67,7 +76,7 @@
                   "var jsonData = pm.response.json();",
                   "pm.test('Check correct ID retrieved', function () {",
                   "    pm.expect(jsonData.id).to.eql(parseInt(pm.environment.get('createdTaskId')));",
-                  "    pm.expect(jsonData.code).to.eql('LAB12-TSK1');",
+                  "    pm.expect(jsonData.code).to.eql(pm.environment.get('taskCode'));",
                   "});"
                 ],
                 "type": "text/javascript"
@@ -78,8 +87,15 @@
             "method": "GET",
             "url": {
               "raw": "{{baseUrl}}/api/v1/tasks/{{createdTaskId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "tasks", "{{createdTaskId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tasks",
+                "{{createdTaskId}}"
+              ]
             }
           }
         },
@@ -111,12 +127,27 @@
             "method": "GET",
             "url": {
               "raw": "{{baseUrl}}/api/v1/tasks?page=0&size=10&sort=id,asc",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "tasks"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tasks"
+              ],
               "query": [
-                { "key": "page", "value": "0" },
-                { "key": "size", "value": "10" },
-                { "key": "sort", "value": "id,asc" }
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                },
+                {
+                  "key": "sort",
+                  "value": "id,asc"
+                }
               ]
             }
           }
@@ -145,10 +176,20 @@
             "method": "GET",
             "url": {
               "raw": "{{baseUrl}}/api/v1/tasks/buscar?title=Examen",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "tasks", "buscar"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tasks",
+                "buscar"
+              ],
               "query": [
-                { "key": "title", "value": "Examen" }
+                {
+                  "key": "title",
+                  "value": "Examen"
+                }
               ]
             }
           }
@@ -167,7 +208,8 @@
                   "pm.test('Has updatedAt timestamp', function () {",
                   "    pm.expect(jsonData.updatedAt).to.not.be.null;",
                   "    pm.expect(jsonData.title).to.eql('Estudiar Examen Final Programación Modificado');",
-                  "});"
+                  "});",
+                  "pm.execution.setNextRequest('N1: Campos vacíos o fuera de rango (400 Bad Request)');"
                 ],
                 "type": "text/javascript"
               }
@@ -176,16 +218,26 @@
           "request": {
             "method": "PUT",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"code\": \"LAB12-TSK1\",\n  \"title\": \"Estudiar Examen Final Programación Modificado\",\n  \"description\": \"Repasar Spring Boot, JPA, Postgres y Pruebas\",\n  \"estimatedHours\": 4.0,\n  \"active\": true,\n  \"priority\": \"HIGH\",\n  \"difficulty\": \"HARD\",\n  \"dueDate\": \"2026-11-30T23:59:59\"\n}"
+              "raw": "{\n  \"code\": \"{{taskCode}}\",\n  \"title\": \"Estudiar Examen Final Programación Modificado\",\n  \"description\": \"Repasar Spring Boot, JPA, Postgres y Pruebas\",\n  \"estimatedHours\": 4.0,\n  \"active\": true,\n  \"priority\": \"HIGH\",\n  \"difficulty\": \"HARD\",\n  \"dueDate\": \"2026-11-30T23:59:59\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/tasks/{{createdTaskId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "tasks", "{{createdTaskId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tasks",
+                "{{createdTaskId}}"
+              ]
             }
           }
         },
@@ -198,7 +250,12 @@
                 "exec": [
                   "pm.test('Status code is 204 No Content', function () {",
                   "    pm.response.to.have.status(204);",
-                  "});"
+                  "});",
+                  "pm.test('DELETE no devuelve cuerpo', () => pm.expect(pm.response.text()).to.eql(''));",
+                  "pm.sendRequest(pm.environment.get('baseUrl') + '/api/v1/tasks/' + pm.environment.get('createdTaskId'), (err, res) => {",
+                  "  pm.test('GET posterior devuelve 404', () => { pm.expect(err).to.eql(null); pm.expect(res.code).to.eql(404); });",
+                  "});",
+                  "pm.execution.setNextRequest(null);"
                 ],
                 "type": "text/javascript"
               }
@@ -208,8 +265,15 @@
             "method": "DELETE",
             "url": {
               "raw": "{{baseUrl}}/api/v1/tasks/{{createdTaskId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "tasks", "{{createdTaskId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tasks",
+                "{{createdTaskId}}"
+              ]
             }
           }
         }
@@ -242,7 +306,10 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -250,8 +317,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/tasks",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "tasks"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tasks"
+              ]
             }
           }
         },
@@ -278,7 +351,10 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -286,8 +362,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/tasks",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "tasks"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tasks"
+              ]
             }
           }
         },
@@ -314,8 +396,15 @@
             "method": "GET",
             "url": {
               "raw": "{{baseUrl}}/api/v1/tasks/abc-invalid-id",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "tasks", "abc-invalid-id"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tasks",
+                "abc-invalid-id"
+              ]
             }
           }
         },
@@ -342,8 +431,15 @@
             "method": "GET",
             "url": {
               "raw": "{{baseUrl}}/api/v1/tasks/999999",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "tasks", "999999"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tasks",
+                "999999"
+              ]
             }
           }
         },
@@ -370,22 +466,42 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"code\": \"DUP-CODE-01\",\n  \"title\": \"Tarea Original\",\n  \"estimatedHours\": 1.5,\n  \"priority\": \"MEDIUM\",\n  \"difficulty\": \"EASY\"\n}"
+              "raw": "{\n  \"code\": \"{{taskCode}}\",\n  \"title\": \"Estudiar Examen Final Programación\",\n  \"description\": \"Repasar Spring Boot, JPA y Postgres\",\n  \"estimatedHours\": 3.5,\n  \"active\": true,\n  \"priority\": \"HIGH\",\n  \"difficulty\": \"HARD\",\n  \"dueDate\": \"2026-11-30T23:59:59\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/tasks",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "tasks"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tasks"
+              ]
             }
           }
         },
         {
           "name": "N6: Incumplimiento de regla de negocio: Editar tarea completada (422 Unprocessable Entity)",
           "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.sendRequest({url: pm.environment.get('baseUrl') + '/api/v1/tasks/' + pm.environment.get('createdTaskId') + '/complete', method: 'PATCH'}, (err, res) => {",
+                  "  pm.test('Preparar tarea completada', () => { pm.expect(err).to.eql(null); pm.expect(res.code).to.eql(200); });",
+                  "});"
+                ]
+              }
+            },
             {
               "listen": "test",
               "script": {
@@ -406,16 +522,26 @@
           "request": {
             "method": "PUT",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"code\": \"DUP-CODE-01\",\n  \"title\": \"Intento de Editar Tarea Completada\",\n  \"estimatedHours\": 2.0,\n  \"priority\": \"HIGH\",\n  \"difficulty\": \"HARD\"\n}"
+              "raw": "{\n  \"code\": \"{{taskCode}}\",\n  \"title\": \"Estudiar Examen Final Programación Modificado\",\n  \"description\": \"Repasar Spring Boot, JPA, Postgres y Pruebas\",\n  \"estimatedHours\": 4.0,\n  \"active\": true,\n  \"priority\": \"HIGH\",\n  \"difficulty\": \"HARD\",\n  \"dueDate\": \"2026-11-30T23:59:59\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/v1/tasks/{{completedTaskId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "tasks", "{{completedTaskId}}"]
+              "raw": "{{baseUrl}}/api/v1/tasks/{{createdTaskId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tasks",
+                "{{createdTaskId}}"
+              ]
             }
           }
         },
@@ -442,20 +568,82 @@
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"title\": \"Intento de Patch no permitido\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/v1/tasks/1",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "tasks", "1"]
+              "raw": "{{baseUrl}}/api/v1/tasks/{{createdTaskId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tasks",
+                "{{createdTaskId}}"
+              ]
             }
           }
+        },
+        {
+          "name": "N8: Falta parametro title (400)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/tasks/buscar"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Estado 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Error uniforme', () => pm.expect(pm.response.json()).to.have.all.keys('timestamp','status','error','message','path','errors'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "N9: Ruta inexistente (404)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/v1/no-existe"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Estado 404', () => pm.response.to.have.status(404));",
+                  "pm.test('Error uniforme', () => pm.expect(pm.response.json()).to.have.all.keys('timestamp','status','error','message','path','errors'));",
+                  "pm.execution.setNextRequest('E6: Eliminar tarea (204 No Content)');"
+                ]
+              }
+            }
+          ]
         }
       ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "if (pm.info.requestName.startsWith('E1:')) {",
+          "  pm.environment.set('taskCode', 'LAB-' + Date.now().toString(36).toUpperCase());",
+          "}"
+        ]
+      }
     }
   ]
 }

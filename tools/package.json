@@ -1,0 +1,7 @@
+{
+  "name": "taskgotchi-lab-tools",
+  "private": true,
+  "type": "module",
+  "scripts": { "lab": "node run-lab.mjs" },
+  "devDependencies": { "newman": "^6.2.1" }
+}

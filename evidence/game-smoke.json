@@ -1,0 +1,14 @@
+{
+  "BossStatus": "DEFEATED",
+  "BossHp": 0,
+  "BossRewardXp": 200,
+  "BossRewardCoins": 125,
+  "HabitStreak": 1,
+  "RepeatedHabitStatus": 422,
+  "FeedHunger": 100,
+  "PlayMood": 100,
+  "RestEnergy": 100,
+  "FinalXp": 370,
+  "FinalCoins": 210,
+  "FinalStage": "YOUNG"
+}

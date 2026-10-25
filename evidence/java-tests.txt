@@ -1,0 +1,10 @@
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 27.94 s -- in ec.edu.espe.pa.taskgotchi.controller.BossControllerTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.719 s -- in ec.edu.espe.pa.taskgotchi.controller.PetControllerTest
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.513 s -- in ec.edu.espe.pa.taskgotchi.controller.TaskControllerTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.102 s -- in ec.edu.espe.pa.taskgotchi.service.HabitServiceTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.005 s -- in ec.edu.espe.pa.taskgotchi.service.PetServiceTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.347 s -- in ec.edu.espe.pa.taskgotchi.service.TaskServiceTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 32.31 s -- in ec.edu.espe.pa.taskgotchi.TaskFlowIntegrationTest
+[INFO] Tests run: 17, Failures: 0, Errors: 0, Skipped: 0
+[INFO] BUILD SUCCESS
+[INFO] Total time:  01:41 min

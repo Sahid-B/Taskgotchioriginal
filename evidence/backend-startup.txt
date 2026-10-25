@@ -1,0 +1,5 @@
+2026-10-25T08:31:41.192-05:00  INFO 20644 --- [taskgotchi-backend] [           main] e.e.e.p.t.TaskgotchiApplication          : Starting TaskgotchiApplication using Java 21.0.5 with PID 20644 (C:\Users\JR\Documents\Septimos Semestre\Programacion Avanzada\Proyecto\target\classes started by JR in C:\Users\JR\Documents\Septimos Semestre\Programacion Avanzada\Proyecto)
+2026-10-25T08:31:57.816-05:00  INFO 20644 --- [taskgotchi-backend] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+	Database version: 16.15
+2026-10-25T08:32:25.626-05:00  INFO 20644 --- [taskgotchi-backend] [           main] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 8080 (http) with context path '/'
+2026-10-25T08:32:25.675-05:00  INFO 20644 --- [taskgotchi-backend] [           main] e.e.e.p.t.TaskgotchiApplication          : Started TaskgotchiApplication in 50.727 seconds (process running for 55.967)

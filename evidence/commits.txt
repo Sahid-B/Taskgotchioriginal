@@ -1,0 +1,12 @@
+83ae558 feat: agregar mundo 2D jugable y documentar el laboratorio
+12916ce feat: conectar aventura misiones habitos mascota y jefes con la API
+e56575a fase 6: hacer reproducible la coleccion Postman y verificar el flujo real
+88040a5 fase 5: devolver errores uniformes incluso en rutas inexistentes
+1a2de2f fase 4: unificar misiones jefes y recompensas transaccionales
+dcae24e fase 3: validar DTO y normalizar datos de misiones
+306f8e8 fase 2: definir entidades auditadas y busqueda JPA con control concurrente
+43c38cd fase 1: migrar a Spring Boot 4.1 y preparar PostgreSQL aislado
+de68c4f Merge pull request #3 from Sahid-B/feature/rest-api-layer-15200571750472912952
+1d2ae4e feat: adapt Taskgotchi to Laboratorio 1.2 specifications with package ec.edu.espe.pa.taskgotchi, PostgreSQL and 6-key error responses
+73affd2 Merge pull request #2 /feature/rest-api-layer-15200571750472912952
+af667fe feat: complete REST API layer, PostgreSQL support, Postman collection, React frontend and next unit extension points

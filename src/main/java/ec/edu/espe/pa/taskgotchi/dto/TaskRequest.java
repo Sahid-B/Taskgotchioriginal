@@ -13,13 +13,14 @@ public record TaskRequest(
         String code,
 
         @NotBlank(message = "El título de la tarea es obligatorio")
-        @Size(max = 100, message = "El título de la tarea no puede superar los 100 caracteres")
+        @Size(min = 3, max = 100, message = "El título debe tener entre 3 y 100 caracteres")
         String title,
 
         String description,
 
         @NotNull(message = "Las horas estimadas son obligatorias")
-        @Positive(message = "Las horas estimadas deben ser un valor positivo")
+        @DecimalMin(value = "0.01", message = "Las horas estimadas deben ser al menos 0.01")
+        @Digits(integer = 3, fraction = 2, message = "Las horas admiten hasta 3 enteros y 2 decimales")
         BigDecimal estimatedHours,
 
         Boolean active,

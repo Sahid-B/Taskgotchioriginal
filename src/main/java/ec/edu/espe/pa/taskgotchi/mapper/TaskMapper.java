@@ -40,7 +40,7 @@ public class TaskMapper {
         if (request == null) return null;
         return Task.builder()
                 .code(request.code() != null ? request.code().trim().toUpperCase() : null)
-                .title(request.title())
+                .title(request.title().trim())
                 .description(request.description())
                 .estimatedHours(request.estimatedHours())
                 .active(request.active() != null ? request.active() : true)

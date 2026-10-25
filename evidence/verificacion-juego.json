@@ -1,0 +1,27 @@
+{
+  "movement": {
+    "before": {
+      "x": 479.7854077253219,
+      "y": 390.0085836909871,
+      "n": 233
+    },
+    "after": {
+      "x": 547.7854077253219,
+      "y": 390.0085836909871,
+      "n": 233
+    }
+  },
+  "jump": {
+    "before": 390.0085836909871,
+    "after": 334.0085836909871
+  },
+  "createdStatus": 201,
+  "completedStatus": 200,
+  "rewardXp": 50,
+  "rewardCoins": 25,
+  "mobile": {
+    "page": 390,
+    "viewport": 390
+  },
+  "pageErrors": []
+}

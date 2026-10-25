@@ -1,0 +1,1 @@
+VERIFICADO: backend PID 20644; API HTTP 200 recupera PERSIST-20261025; fila SQL identica antes y despues del reinicio.

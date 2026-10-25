@@ -11,4 +11,5 @@ import java.util.List;
 public interface HabitLogRepository extends JpaRepository<HabitLog, Long> {
     List<HabitLog> findByHabitIdOrderByDateDesc(Long habitId);
     boolean existsByHabitIdAndDate(Long habitId, LocalDate date);
+    void deleteByHabitId(Long habitId);
 }

@@ -81,9 +81,10 @@ public class TaskServiceImpl implements TaskService {
     @Transactional(readOnly = true)
     public PageResponse<TaskResponse> searchTasksByTitle(String title, Pageable pageable) {
         if (title == null || title.trim().isEmpty()) {
-            throw new BusinessRuleException("El parámetro de búsqueda 'title' no puede estar vacío");
+            throw new IllegalArgumentException("El parámetro de búsqueda 'title' no puede estar vacío");
         }
-        return getTasks(null, null, null, null, title, pageable);
+        return PageResponse.from(taskRepository.findByUserIdAndTitleContainingIgnoreCase(
+                currentUserProvider.getCurrentUserId(), title.trim(), pageable).map(taskMapper::toResponse));
     }
 
     @Override
@@ -168,7 +169,7 @@ public class TaskServiceImpl implements TaskService {
         }
 
         task.setCode(normalizedCode);
-        task.setTitle(request.title());
+        task.setTitle(request.title().trim());
         task.setDescription(request.description());
         task.setEstimatedHours(request.estimatedHours());
         task.setActive(request.active() != null ? request.active() : true);
@@ -247,6 +248,9 @@ public class TaskServiceImpl implements TaskService {
 
         if (task.getStatus() == TaskStatus.COMPLETED) {
             throw new BusinessRuleException("La tarea ya se encuentra completada");
+        }
+        if (!Boolean.TRUE.equals(task.getActive())) {
+            throw new BusinessRuleException("No se puede completar una tarea inactiva");
         }
 
         task.setStatus(TaskStatus.COMPLETED);

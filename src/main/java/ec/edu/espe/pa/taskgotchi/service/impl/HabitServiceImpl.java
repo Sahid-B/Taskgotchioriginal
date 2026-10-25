@@ -87,6 +87,7 @@ public class HabitServiceImpl implements HabitService {
         Long userId = currentUserProvider.getCurrentUserId();
         Habit habit = habitRepository.findByIdAndUserId(id, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Hábito no encontrado o no pertenece al usuario"));
+        habitLogRepository.deleteByHabitId(id);
         habitRepository.delete(habit);
     }
 

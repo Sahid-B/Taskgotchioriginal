@@ -1,169 +1,76 @@
 package ec.edu.espe.pa.taskgotchi.service.impl;
 
-import ec.edu.espe.pa.taskgotchi.dto.BossResponse;
-import ec.edu.espe.pa.taskgotchi.dto.CreateBossRequest;
-import ec.edu.espe.pa.taskgotchi.dto.TaskRequest;
-import ec.edu.espe.pa.taskgotchi.dto.TaskResponse;
+import ec.edu.espe.pa.taskgotchi.dto.*;
+import ec.edu.espe.pa.taskgotchi.entity.*;
 import ec.edu.espe.pa.taskgotchi.exception.BusinessRuleException;
 import ec.edu.espe.pa.taskgotchi.exception.ResourceNotFoundException;
 import ec.edu.espe.pa.taskgotchi.mapper.BossMapper;
-import ec.edu.espe.pa.taskgotchi.mapper.TaskMapper;
-import ec.edu.espe.pa.taskgotchi.entity.*;
-import ec.edu.espe.pa.taskgotchi.repository.BossRepository;
-import ec.edu.espe.pa.taskgotchi.repository.TaskRepository;
-import ec.edu.espe.pa.taskgotchi.repository.UserRepository;
+import ec.edu.espe.pa.taskgotchi.repository.*;
 import ec.edu.espe.pa.taskgotchi.security.CurrentUserProvider;
 import ec.edu.espe.pa.taskgotchi.service.BossService;
-import ec.edu.espe.pa.taskgotchi.service.PetInternalService;
+import ec.edu.espe.pa.taskgotchi.service.TaskService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class BossServiceImpl implements BossService {
-
     private final BossRepository bossRepository;
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
     private final CurrentUserProvider currentUserProvider;
     private final BossMapper bossMapper;
-    private final TaskMapper taskMapper;
-    private final PetInternalService petInternalService;
+    private final TaskService taskService;
 
-    @Override
-    @Transactional(readOnly = true)
     public List<BossResponse> getAllBosses() {
-        Long userId = currentUserProvider.getCurrentUserId();
-        return bossRepository.findByUserId(userId).stream()
-                .map(boss -> {
-                    List<Task> subtasks = taskRepository.findByBossId(boss.getId());
-                    return bossMapper.toResponse(boss, subtasks);
-                })
-                .toList();
+        return bossRepository.findByUserId(currentUserProvider.getCurrentUserId()).stream()
+                .map(boss -> bossMapper.toResponse(boss, taskRepository.findByBossId(boss.getId()))).toList();
     }
 
-    @Override
-    @Transactional(readOnly = true)
     public BossResponse getBossById(Long id) {
-        Long userId = currentUserProvider.getCurrentUserId();
-        Boss boss = bossRepository.findByIdAndUserId(id, userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Jefe no encontrado o no pertenece al usuario"));
-        List<Task> subtasks = taskRepository.findByBossId(boss.getId());
-        return bossMapper.toResponse(boss, subtasks);
+        return bossMapper.toResponse(findBoss(id), taskRepository.findByBossId(id));
     }
 
-    @Override
     @Transactional
     public BossResponse createBoss(CreateBossRequest request) {
-        Long userId = currentUserProvider.getCurrentUserId();
-        User user = userRepository.findById(userId)
+        User user = userRepository.findById(currentUserProvider.getCurrentUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
-
         Boss boss = bossMapper.toEntity(request);
         boss.setUser(user);
-        boss = bossRepository.save(boss);
-
-        List<Task> createdSubtasks = List.of();
-        if (request.subtasks() != null && !request.subtasks().isEmpty()) {
-            final Boss savedBoss = boss;
-            createdSubtasks = request.subtasks().stream().map(subReq -> {
-                Task task = taskMapper.toEntity(subReq);
-                task.setUser(user);
-                task.setBoss(savedBoss);
-
-                int xpReward = switch (subReq.difficulty() != null ? subReq.difficulty() : TaskDifficulty.MEDIUM) {
-                    case EASY -> 20;
-                    case MEDIUM -> 50;
-                    case HARD -> 100;
-                };
-                int coinReward = switch (subReq.difficulty() != null ? subReq.difficulty() : TaskDifficulty.MEDIUM) {
-                    case EASY -> 10;
-                    case MEDIUM -> 25;
-                    case HARD -> 60;
-                };
-                task.setXpReward(xpReward);
-                task.setCoinReward(coinReward);
-
-                return taskRepository.save(task);
-            }).toList();
+        boss = bossRepository.saveAndFlush(boss);
+        if (request.subtasks() != null) {
+            for (TaskRequest task : request.subtasks()) addSubtaskToBoss(boss.getId(), task);
         }
-
-        return bossMapper.toResponse(boss, createdSubtasks);
+        return getBossById(boss.getId());
     }
 
-    @Override
     @Transactional
     public TaskResponse addSubtaskToBoss(Long bossId, TaskRequest request) {
-        Long userId = currentUserProvider.getCurrentUserId();
-        Boss boss = bossRepository.findByIdAndUserId(bossId, userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Jefe no encontrado o no pertenece al usuario"));
-
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
-
-        Task task = taskMapper.toEntity(request);
-        task.setUser(user);
-        task.setBoss(boss);
-
-        int xpReward = switch (request.difficulty()) {
-            case EASY -> 20;
-            case MEDIUM -> 50;
-            case HARD -> 100;
-        };
-        int coinReward = switch (request.difficulty()) {
-            case EASY -> 10;
-            case MEDIUM -> 25;
-            case HARD -> 60;
-        };
-        task.setXpReward(xpReward);
-        task.setCoinReward(coinReward);
-
-        task = taskRepository.save(task);
-
-        return taskMapper.toResponse(task);
+        Boss boss = findBoss(bossId);
+        if (boss.getStatus() == BossStatus.DEFEATED) {
+            throw new BusinessRuleException("No se pueden agregar misiones a un jefe derrotado");
+        }
+        return taskService.createTask(new TaskRequest(request.code(), request.title(), request.description(),
+                request.estimatedHours(), request.active(), request.categoryId(), request.priority(),
+                request.difficulty(), request.dueDate(), bossId, request.parentTaskId()));
     }
 
-    @Override
     @Transactional
     public TaskResponse completeBossSubtask(Long bossId, Long subtaskId) {
-        Long userId = currentUserProvider.getCurrentUserId();
-        Boss boss = bossRepository.findByIdAndUserId(bossId, userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Jefe no encontrado o no pertenece al usuario"));
-
-        Task subtask = taskRepository.findByIdAndUserId(subtaskId, userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Subtarea no encontrada o no pertenece al usuario"));
-
-        if (!boss.getId().equals(subtask.getBoss() != null ? subtask.getBoss().getId() : null)) {
+        findBoss(bossId);
+        Task task = taskRepository.findByIdAndUserId(subtaskId, currentUserProvider.getCurrentUserId())
+                .orElseThrow(() -> new ResourceNotFoundException("Subtarea no encontrada"));
+        if (task.getBoss() == null || !bossId.equals(task.getBoss().getId())) {
             throw new BusinessRuleException("La subtarea no está asociada a este jefe");
         }
+        return taskService.completeTask(subtaskId);
+    }
 
-        if (subtask.getStatus() == TaskStatus.COMPLETED) {
-            throw new BusinessRuleException("La subtarea ya ha sido completada");
-        }
-
-        subtask.setStatus(TaskStatus.COMPLETED);
-        subtask.setCompletedAt(java.time.LocalDateTime.now());
-        subtask = taskRepository.save(subtask);
-
-        // Otorgar recompensas individuales de la subtarea
-        petInternalService.addXpAndCoins(userId, subtask.getXpReward(), subtask.getCoinReward(), "Subtarea de jefe completada: " + subtask.getTitle());
-
-        // Reducir vida del jefe
-        if (boss.getStatus() == BossStatus.ACTIVE) {
-            int damage = subtask.getXpReward();
-            int newHp = Math.max(0, boss.getCurrentHp() - damage);
-            boss.setCurrentHp(newHp);
-
-            if (newHp == 0) {
-                boss.setStatus(BossStatus.DEFEATED);
-                petInternalService.addXpAndCoins(userId, 200, 150, "¡Jefe Derrotado: " + boss.getTitle() + "!");
-            }
-            bossRepository.save(boss);
-        }
-
-        return taskMapper.toResponse(subtask);
+    private Boss findBoss(Long id) {
+        return bossRepository.findByIdAndUserId(id, currentUserProvider.getCurrentUserId())
+                .orElseThrow(() -> new ResourceNotFoundException("Jefe no encontrado"));
     }
 }

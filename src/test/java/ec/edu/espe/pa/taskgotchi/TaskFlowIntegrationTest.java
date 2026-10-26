@@ -47,6 +47,12 @@ class TaskFlowIntegrationTest {
         assertEquals(before.get("xp").asInt() + 50, after.get("xp").asInt());
         assertEquals(before.get("coins").asInt() + 25, after.get("coins").asInt());
         assertEquals(400, call("POST", path, "{}").statusCode());
+        var invalidLogin = call("POST", "/api/v1/auth/login", "{\"username\":\"devstudent\",\"password\":\"incorrecta\"}");
+        assertEquals(401, invalidLogin.statusCode());
+        assertEquals(6, json.readTree(invalidLogin.body()).size());
+        var duplicateUser = call("POST", "/api/v1/auth/register",
+                "{\"username\":\"devstudent\",\"email\":\"otro@espe.edu.ec\",\"password\":\"Sintetica_2026\"}");
+        assertEquals(409, duplicateUser.statusCode());
         assertEquals(400, call("GET", path + "/abc", null).statusCode());
         assertEquals(400, call("GET", path + "/buscar", null).statusCode());
         assertEquals(405, call("PATCH", path + "/" + id, "{}").statusCode());

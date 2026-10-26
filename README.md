@@ -22,6 +22,8 @@ Interfaz: http://localhost:5173
 Swagger: http://localhost:8080/swagger-ui/index.html
 Base: PostgreSQL 16, taskgotchidb, usuario taskgotchi, host localhost, puerto 5433.
 Datos persistentes: volumen Docker proyecto_taskgotchi-data.
+El backend escucha en el puerto 8080 y PostgreSQL en el 5433; se pueden cambiar
+con SERVER_PORT y DB_PORT. El frontend usa VITE_API_BASE_URL (por defecto 8080).
 Los registros sobreviven al reinicio del backend y del contenedor.
 
 Para una demostración temporal sin PostgreSQL:
@@ -66,8 +68,9 @@ Contrato principal:
 | PATCH | /api/v1/tasks/{id}/complete | 200, recompensas una sola vez |
 
 Errores uniformes: timestamp, status, error, message, path, errors.
-Validación 400; inexistencia 404; método no soportado 405; duplicado 409;
-regla de negocio 422. La fecha límite admite tareas vencidas.
+Validación 400; credenciales inválidas 401; inexistencia 404; método no
+soportado 405; duplicado 409; regla de negocio 422. La fecha límite admite
+tareas vencidas y el estado OVERDUE se persiste al arrancar y cada minuto.
 No se puede editar una misión completada ni completar una inactiva.
 
 ## Verificar

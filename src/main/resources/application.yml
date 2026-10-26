@@ -4,7 +4,7 @@ spring:
   application:
     name: taskgotchi-backend
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:taskgotchidb}}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5433}/${DB_NAME:taskgotchidb}}
     username: ${DB_USER:postgres}
     password: ${DB_PASSWORD}
     driver-class-name: ${DB_DRIVER:org.postgresql.Driver}
@@ -26,6 +26,8 @@ server:
 taskgotchi:
   cors:
     allowed-origins: ${CORS_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}
+  tasks:
+    overdue-check-ms: ${TASK_OVERDUE_CHECK_MS:60000}
   pet:
     xp-thresholds:
       baby: 100

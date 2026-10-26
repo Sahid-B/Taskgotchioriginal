@@ -3,7 +3,8 @@ package ec.edu.espe.pa.taskgotchi.service.impl;
 import ec.edu.espe.pa.taskgotchi.dto.AuthResponse;
 import ec.edu.espe.pa.taskgotchi.dto.LoginRequest;
 import ec.edu.espe.pa.taskgotchi.dto.RegisterRequest;
-import ec.edu.espe.pa.taskgotchi.exception.BusinessRuleException;
+import ec.edu.espe.pa.taskgotchi.exception.DuplicateResourceException;
+import ec.edu.espe.pa.taskgotchi.exception.UnauthorizedException;
 import ec.edu.espe.pa.taskgotchi.mapper.UserMapper;
 import ec.edu.espe.pa.taskgotchi.entity.Pet;
 import ec.edu.espe.pa.taskgotchi.entity.User;
@@ -28,10 +29,10 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByUsername(request.username())) {
-            throw new BusinessRuleException("El nombre de usuario ya está registrado");
+            throw new DuplicateResourceException("El nombre de usuario ya está registrado");
         }
         if (userRepository.existsByEmail(request.email())) {
-            throw new BusinessRuleException("El correo electrónico ya está registrado");
+            throw new DuplicateResourceException("El correo electrónico ya está registrado");
         }
 
         User user = User.builder()
@@ -58,10 +59,10 @@ public class AuthServiceImpl implements AuthService {
     public AuthResponse login(LoginRequest request) {
         User user = userRepository.findByUsername(request.username())
                 .or(() -> userRepository.findByEmail(request.username()))
-                .orElseThrow(() -> new BusinessRuleException("Credenciales inválidas"));
+                .orElseThrow(() -> new UnauthorizedException("Credenciales inválidas"));
 
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
-            throw new BusinessRuleException("Credenciales inválidas");
+            throw new UnauthorizedException("Credenciales inválidas");
         }
 
         String placeholderToken = "TODO_JWT_TOKEN_FOR_USER_" + user.getId();

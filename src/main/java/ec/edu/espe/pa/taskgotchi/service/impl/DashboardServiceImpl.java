@@ -9,6 +9,7 @@ import ec.edu.espe.pa.taskgotchi.entity.Habit;
 import ec.edu.espe.pa.taskgotchi.entity.Pet;
 import ec.edu.espe.pa.taskgotchi.entity.Task;
 import ec.edu.espe.pa.taskgotchi.entity.TaskStatus;
+import ec.edu.espe.pa.taskgotchi.repository.HabitLogRepository;
 import ec.edu.espe.pa.taskgotchi.repository.HabitRepository;
 import ec.edu.espe.pa.taskgotchi.repository.PetEventRepository;
 import ec.edu.espe.pa.taskgotchi.repository.PetRepository;
@@ -21,9 +22,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
-
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +34,7 @@ public class DashboardServiceImpl implements DashboardService {
 
     private final TaskRepository taskRepository;
     private final HabitRepository habitRepository;
+    private final HabitLogRepository habitLogRepository;
     private final PetEventRepository petEventRepository;
     private final PetRepository petRepository;
     private final PetService petService;
@@ -46,7 +47,7 @@ public class DashboardServiceImpl implements DashboardService {
         Long userId = currentUserProvider.getCurrentUserId();
 
         long pendingTasks = taskRepository.countByUserIdAndStatus(userId, TaskStatus.PENDING);
-        long overdueTasks = taskRepository.countByUserIdAndDueDateBeforeAndStatus(userId, LocalDateTime.now(), TaskStatus.PENDING);
+        long overdueTasks = taskRepository.countByUserIdAndStatus(userId, TaskStatus.OVERDUE);
         long completedTasks = taskRepository.countByUserIdAndStatus(userId, TaskStatus.COMPLETED);
 
         int maxStreak = habitRepository.findByUserId(userId).stream()
@@ -69,12 +70,11 @@ public class DashboardServiceImpl implements DashboardService {
     @Transactional(readOnly = true)
     public WeeklyStatsResponse getWeeklyStats() {
         Long userId = currentUserProvider.getCurrentUserId();
-        LocalDateTime startOfWeek = LocalDateTime.now().with(DayOfWeek.MONDAY).withHour(0).withMinute(0).withSecond(0);
+        LocalDate startOfWeekDate = LocalDate.now().with(DayOfWeek.MONDAY);
+        LocalDateTime startOfWeek = startOfWeekDate.atStartOfDay();
 
         List<Task> completedThisWeek = taskRepository.findByUserIdAndStatusAndCompletedAtAfter(userId, TaskStatus.COMPLETED, startOfWeek);
-        long habitsCompletedThisWeek = habitRepository.findByUserId(userId).stream()
-                .filter(h -> h.getLastCompletedDate() != null && h.getLastCompletedDate().atStartOfDay().isAfter(startOfWeek))
-                .count();
+        long habitsCompletedThisWeek = habitLogRepository.countByHabitUserIdAndDateGreaterThanEqual(userId, startOfWeekDate);
 
         Map<String, Integer> tasksByDay = new HashMap<>();
         for (DayOfWeek day : DayOfWeek.values()) {

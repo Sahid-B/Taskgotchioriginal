@@ -1,12 +1,12 @@
 package ec.edu.espe.pa.taskgotchi.controller;
 
+import ec.edu.espe.pa.taskgotchi.dto.PageResponse;
 import ec.edu.espe.pa.taskgotchi.dto.PetEventResponse;
 import ec.edu.espe.pa.taskgotchi.dto.PetResponse;
 import ec.edu.espe.pa.taskgotchi.service.PetService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
@@ -46,7 +46,7 @@ public class PetController {
 
     @GetMapping("/events")
     @Operation(summary = "Obtener historial de eventos", description = "Devuelve el historial paginado de eventos de la mascota (comidas, evoluciones, tareas completadas).")
-    public ResponseEntity<Page<PetEventResponse>> getPetEvents(@PageableDefault(size = 20) Pageable pageable) {
+    public ResponseEntity<PageResponse<PetEventResponse>> getPetEvents(@PageableDefault(size = 20) Pageable pageable) {
         return ResponseEntity.ok(petService.getPetEvents(pageable));
     }
 }

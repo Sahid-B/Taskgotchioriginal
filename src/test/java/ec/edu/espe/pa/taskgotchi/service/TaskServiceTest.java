@@ -15,6 +15,7 @@ import ec.edu.espe.pa.taskgotchi.service.impl.TaskServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -79,6 +80,34 @@ class TaskServiceTest {
         when(taskRepository.existsByCodeAndUserId("TSK-100", 1L)).thenReturn(true);
 
         assertThrows(DuplicateResourceException.class, () -> taskService.createTask(request));
+    }
+
+    @Test
+    void createTask_PastDueDate_MarksTaskAsOverdue() {
+        LocalDateTime pastDueDate = LocalDateTime.now().minusDays(2);
+        TaskRequest request = new TaskRequest("TSK-200", "Tarea vencida", "Desc", new BigDecimal("1.0"), true, null,
+                TaskPriority.MEDIUM, TaskDifficulty.EASY, pastDueDate, null, null);
+        Task entity = Task.builder().dueDate(pastDueDate).build();
+
+        when(currentUserProvider.getCurrentUserId()).thenReturn(1L);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(taskRepository.existsByCodeAndUserId("TSK-200", 1L)).thenReturn(false);
+        when(taskMapper.toEntity(request)).thenReturn(entity);
+        when(taskRepository.saveAndFlush(any(Task.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(taskMapper.toResponse(any(Task.class))).thenAnswer(invocation -> {
+            Task saved = invocation.getArgument(0);
+            return new TaskResponse(saved.getId(), saved.getCode(), saved.getTitle(), saved.getDescription(),
+                    saved.getEstimatedHours(), saved.getActive(), null, saved.getPriority(), saved.getDifficulty(),
+                    saved.getDueDate(), saved.getStatus(), saved.getXpReward(), saved.getCoinReward(), null,
+                    LocalDateTime.now(), LocalDateTime.now(), null, null);
+        });
+
+        TaskResponse response = taskService.createTask(request);
+
+        assertEquals(TaskStatus.OVERDUE, response.status());
+        ArgumentCaptor<Task> captor = ArgumentCaptor.forClass(Task.class);
+        verify(taskRepository).saveAndFlush(captor.capture());
+        assertEquals(TaskStatus.OVERDUE, captor.getValue().getStatus());
     }
 
     @Test

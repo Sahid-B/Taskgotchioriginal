@@ -1,5 +1,6 @@
 package ec.edu.espe.pa.taskgotchi.service.impl;
 
+import ec.edu.espe.pa.taskgotchi.dto.PageResponse;
 import ec.edu.espe.pa.taskgotchi.dto.PetEventResponse;
 import ec.edu.espe.pa.taskgotchi.dto.PetResponse;
 import ec.edu.espe.pa.taskgotchi.exception.BusinessRuleException;
@@ -13,7 +14,6 @@ import ec.edu.espe.pa.taskgotchi.security.CurrentUserProvider;
 import ec.edu.espe.pa.taskgotchi.service.PetService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -117,11 +117,11 @@ public class PetServiceImpl implements PetService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<PetEventResponse> getPetEvents(Pageable pageable) {
+    public PageResponse<PetEventResponse> getPetEvents(Pageable pageable) {
         Long userId = currentUserProvider.getCurrentUserId();
         Pet pet = getPetByUserId(userId);
-        return petEventRepository.findByPetIdOrderByCreatedAtDesc(pet.getId(), pageable)
-                .map(petMapper::toEventResponse);
+        return PageResponse.from(petEventRepository.findByPetIdOrderByCreatedAtDesc(pet.getId(), pageable)
+                .map(petMapper::toEventResponse));
     }
 
     @Override

@@ -17,7 +17,6 @@ import ec.edu.espe.pa.taskgotchi.service.PetInternalService;
 import ec.edu.espe.pa.taskgotchi.service.TaskService;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -67,14 +66,7 @@ public class TaskServiceImpl implements TaskService {
             return cb.and(predicates.toArray(new Predicate[0]));
         };
 
-        Page<TaskResponse> mappedPage = taskRepository.findAll(spec, pageable).map(task -> {
-            if (task.getStatus() == TaskStatus.PENDING && task.getDueDate() != null && task.getDueDate().isBefore(LocalDateTime.now())) {
-                task.setStatus(TaskStatus.OVERDUE);
-            }
-            return taskMapper.toResponse(task);
-        });
-
-        return PageResponse.from(mappedPage);
+        return PageResponse.from(taskRepository.findAll(spec, pageable).map(taskMapper::toResponse));
     }
 
     @Override
@@ -93,10 +85,6 @@ public class TaskServiceImpl implements TaskService {
         Long userId = currentUserProvider.getCurrentUserId();
         Task task = taskRepository.findByIdAndUserId(id, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Tarea no encontrada con ID: " + id));
-
-        if (task.getStatus() == TaskStatus.PENDING && task.getDueDate() != null && task.getDueDate().isBefore(LocalDateTime.now())) {
-            task.setStatus(TaskStatus.OVERDUE);
-        }
 
         return taskMapper.toResponse(task);
     }
@@ -147,6 +135,7 @@ public class TaskServiceImpl implements TaskService {
         };
         task.setXpReward(xpReward);
         task.setCoinReward(coinReward);
+        actualizarEstadoPorVencimiento(task);
 
         task = taskRepository.saveAndFlush(task);
         return taskMapper.toResponse(task);
@@ -225,6 +214,7 @@ public class TaskServiceImpl implements TaskService {
         };
         task.setXpReward(xpReward);
         task.setCoinReward(coinReward);
+        actualizarEstadoPorVencimiento(task);
 
         task = taskRepository.saveAndFlush(task);
         return taskMapper.toResponse(task);
@@ -237,6 +227,14 @@ public class TaskServiceImpl implements TaskService {
         Task task = taskRepository.findByIdAndUserId(id, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Tarea no encontrada con ID: " + id));
         taskRepository.delete(task);
+    }
+
+    private void actualizarEstadoPorVencimiento(Task task) {
+        if (task.getStatus() == TaskStatus.COMPLETED) {
+            return;
+        }
+        boolean vencida = task.getDueDate() != null && task.getDueDate().isBefore(LocalDateTime.now());
+        task.setStatus(vencida ? TaskStatus.OVERDUE : TaskStatus.PENDING);
     }
 
     @Override

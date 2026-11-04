@@ -1,5 +1,6 @@
 package ec.edu.espe.pa.taskgotchi.service.impl;
 
+import ec.edu.espe.pa.taskgotchi.aspect.Auditable;
 import ec.edu.espe.pa.taskgotchi.dto.PageResponse;
 import ec.edu.espe.pa.taskgotchi.dto.TaskRequest;
 import ec.edu.espe.pa.taskgotchi.dto.TaskResponse;
@@ -91,6 +92,7 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     @Transactional
+    @Auditable("TASK_CREATED")
     public TaskResponse createTask(TaskRequest request) {
         Long userId = currentUserProvider.getCurrentUserId();
         User user = userRepository.findById(userId)
@@ -222,6 +224,7 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     @Transactional
+    @Auditable("TASK_DELETED")
     public void deleteTask(Long id) {
         Long userId = currentUserProvider.getCurrentUserId();
         Task task = taskRepository.findByIdAndUserId(id, userId)
@@ -239,6 +242,7 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     @Transactional
+    @Auditable("TASK_COMPLETED")
     public TaskResponse completeTask(Long id) {
         Long userId = currentUserProvider.getCurrentUserId();
         Task task = taskRepository.findByIdAndUserId(id, userId)

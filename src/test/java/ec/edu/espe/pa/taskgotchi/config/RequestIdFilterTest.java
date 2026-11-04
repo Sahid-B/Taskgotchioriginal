@@ -1,5 +1,8 @@
 package ec.edu.espe.pa.taskgotchi.config;
 
+import ec.edu.espe.pa.taskgotchi.security.JsonSecurityErrorHandler;
+import ec.edu.espe.pa.taskgotchi.security.JwtService;
+import org.springframework.security.test.context.support.WithMockUser;
 import ec.edu.espe.pa.taskgotchi.controller.PetController;
 import ec.edu.espe.pa.taskgotchi.service.PetService;
 import org.junit.jupiter.api.Test;
@@ -19,7 +22,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(PetController.class)
-@Import(SecurityConfig.class)
+@Import({SecurityConfig.class, JwtService.class, JsonSecurityErrorHandler.class})
+@WithMockUser
 @ExtendWith(OutputCaptureExtension.class)
 class RequestIdFilterTest {
 

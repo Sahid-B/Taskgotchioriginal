@@ -28,8 +28,20 @@ logging:
     correlation: "[%X{requestId:-}] "
 
 taskgotchi:
+  security:
+    jwt:
+      # Mínimo 32 caracteres. Vacío = clave temporal (las sesiones caducan al reiniciar).
+      secret: ${JWT_SECRET:}
+      expiration-minutes: ${JWT_EXPIRATION_MINUTES:120}
+    auth-rate-limit:
+      max-attempts: ${AUTH_RATE_LIMIT_MAX:10}
+      window-seconds: ${AUTH_RATE_LIMIT_WINDOW_SECONDS:60}
+  dev-user:
+    password: ${DEV_USER_PASSWORD:}
+    reset-password: ${DEV_USER_RESET_PASSWORD:false}
   monitoring:
     slow-request-ms: ${SLOW_REQUEST_MS:1000}
+    slow-method-ms: ${SLOW_METHOD_MS:500}
   cors:
     allowed-origins: ${CORS_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}
   tasks:

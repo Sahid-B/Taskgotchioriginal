@@ -1,5 +1,6 @@
 package ec.edu.espe.pa.taskgotchi.config;
 
+import ec.edu.espe.pa.taskgotchi.security.AuthRateLimitFilter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -34,7 +35,7 @@ public class RequestMonitoringFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return !request.getRequestURI().startsWith("/api/");
+        return !AuthRateLimitFilter.applicationPath(request).startsWith("/api/");
     }
 
     @Override

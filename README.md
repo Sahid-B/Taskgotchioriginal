@@ -47,9 +47,33 @@ Canvas; el progreso y las recompensas se consultan y guardan en la API. Caminar
 y saltar no otorgan recompensas: el jugador entrega una misión cuando la realizó
 en la vida real. Mi progreso conserva el panel de estadísticas y el temporizador.
 
-El modo actual es **local de un jugador**; el usuario de desarrollo está identificado
-por DevCurrentUserProvider. El login JWT, multijugador y una IA externa no forman
-parte de esta versión. La API no debe exponerse públicamente en este modo.
+## Acceso y seguridad
+Cada estudiante crea su cuenta en la pantalla inicial y solo ve sus propios datos.
+Toda la API bajo `/api/v1/**` exige `Authorization: Bearer <token>` salvo
+`/api/v1/auth/register` y `/api/v1/auth/login`; sin token o con uno inválido o
+expirado responde 401 con el error uniforme. En Swagger, pulsa **Authorize**.
+
+| Variable | Uso | Por defecto |
+|---|---|---|
+| `JWT_SECRET` | Clave HS256, mínimo 32 caracteres | Aleatoria en cada arranque (las sesiones caducan al reiniciar) |
+| `JWT_EXPIRATION_MINUTES` | Duración del token | 120 |
+| `AUTH_RATE_LIMIT_MAX` / `AUTH_RATE_LIMIT_WINDOW_SECONDS` | Intentos de login/registro por IP | 10 cada 60 s (después, 429) |
+| `DEV_USER_PASSWORD` | Contraseña de `devstudent` al crearlo | Sin definir: no se puede usar |
+| `DEV_USER_RESET_PASSWORD` | `true` aplica `DEV_USER_PASSWORD` a un `devstudent` ya existente (conserva sus datos) | `false` |
+| `SLOW_REQUEST_MS` / `SLOW_METHOD_MS` | Umbrales de peticiones y métodos lentos | 1000 / 500 |
+
+## Middlewares
+| Tipo | Clase | Función |
+|---|---|---|
+| Filtro | `config/RequestIdFilter` | ID `X-Request-Id` en cada petición y en los logs |
+| Filtro | `config/RequestMonitoringFilter` | Método, URL, estado y tiempo de cada petición |
+| Filtro | `security/AuthRateLimitFilter` | Bloquea fuerza bruta en login/registro (429) |
+| Filtro | `security/JwtAuthenticationFilter` | Valida el JWT dentro de Spring Security |
+| Interceptor | `config/AuditInterceptor` | Auditoría HTTP de acciones que modifican datos |
+| Aspecto | `aspect/PerformanceAspect` | Mide los métodos de servicio y avisa de los lentos |
+| Aspecto | `aspect/BusinessAuditAspect` + `@Auditable` | Auditoría de negocio: recompensas, jefes, mascota |
+
+Multijugador e IA externa no forman parte de esta versión.
 
 ## Laboratorio
 Java 21 · Spring Boot 4.1.2 · Spring MVC · Spring Data JPA · PostgreSQL 16 · React/TypeScript/Vite.
@@ -68,8 +92,8 @@ Contrato principal:
 | PATCH | /api/v1/tasks/{id}/complete | 200, recompensas una sola vez |
 
 Errores uniformes: timestamp, status, error, message, path, errors.
-Validación 400; credenciales inválidas 401; inexistencia 404; método no
-soportado 405; duplicado 409; regla de negocio 422. La fecha límite admite
+Validación 400; credenciales inválidas o falta de token 401; inexistencia 404; método no
+soportado 405; duplicado 409; regla de negocio 422; demasiados intentos 429. La fecha límite admite
 tareas vencidas y el estado OVERDUE se persiste al arrancar y cada minuto.
 No se puede editar una misión completada ni completar una inactiva.
 

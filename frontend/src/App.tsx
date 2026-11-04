@@ -1,5 +1,5 @@
 import React, { FormEvent, useEffect, useRef, useState } from 'react';
-import { api } from './api/client';
+import { api, SessionUser } from './api/client';
 import { Boss, Habit, PageResponse, Pet, PetEvent, Summary, Task, TaskRequest } from './types';
 import './styles.css';
 import { GameWorld } from './GameWorld';
@@ -44,7 +44,7 @@ function errorMessage(error: unknown): string {
   return data ? [data.message, ...(data.errors || [])].filter(Boolean).join(' · ') : 'No se pudo conectar con el servidor. Comprueba que el backend esté encendido.';
 }
 function todayLocal() { return new Date().toLocaleDateString('en-CA'); }
-export const App: React.FC = () => {
+export const App: React.FC<{ user: SessionUser; onLogout: () => void }> = ({ user, onLogout }) => {
   const [view, setView] = useState<View>('play');
   const [summary, setSummary] = useState<Summary | null>(null);
   const [tasks, setTasks] = useState<PageResponse<Task> | null>(null);
@@ -174,10 +174,10 @@ export const App: React.FC = () => {
       <div className="workspace-label">TU ESPACIO DE CRECIMIENTO</div>
       <nav aria-label="Navegación principal">{views.map(([id, name, icon]) => <button key={id} aria-label={name} className={view === id ? 'nav-item active' : 'nav-item'} onClick={() => { setView(id); setError(''); }} aria-current={view === id ? 'page' : undefined}><Icon name={icon}/><span>{name}</span>{id === 'missions' && summary && <small>{summary.pendingTasks}</small>}</button>)}</nav>
       <div className="sidebar-tip"><Icon name="spark" size={23}/><h3>Pequeñas acciones.<br/>Grandes aventuras.</h3><p>Tu Gotchi crece con cada misión que completas.</p></div>
-      <div className="profile"><span className="avatar">JR</span><div><strong>Explorador local</strong><small>Modo laboratorio · un jugador</small></div><span className="online-dot"/></div>
+      <div className="profile"><span className="avatar">{user.username.slice(0, 2).toUpperCase()}</span><div><strong>{user.username}</strong><small>{user.email}</small></div><span className="online-dot"/></div>
     </aside>
     <main className="main-shell">
-      <header className="topbar"><img className="topbar-logo" src="/logo-mascot.png" alt="Taskgotchi" width={34} height={34}/><div className="breadcrumb">Mi espacio <span>/</span> {views.find(v => v[0] === view)?.[1]}</div><div className="topbar-right"><span className="connection"><i/> {summary ? 'Conectado' : 'Conectando'}</span><span className="coin-wallet"><Icon name="coin" size={17}/>{pet?.coins ?? '—'}<small>monedas</small></span></div></header>
+      <header className="topbar"><img className="topbar-logo" src="/logo-mascot.png" alt="Taskgotchi" width={34} height={34}/><div className="breadcrumb">Mi espacio <span>/</span> {views.find(v => v[0] === view)?.[1]}</div><div className="topbar-right"><span className="session-username" title={user.username}>{user.username}</span><button className="session-logout" onClick={onLogout}>Cerrar sesión</button><span className="connection"><i/> {summary ? 'Conectado' : 'Conectando'}</span><span className="coin-wallet"><Icon name="coin" size={17}/>{pet?.coins ?? '—'}<small>monedas</small></span></div></header>
       <div className="content"><div className="page-heading"><div><p className="eyebrow">{headings[view][0]}</p><h1>{headings[view][1]}</h1></div><button className="primary" onClick={() => openModal(view === 'habits' ? { kind: 'habit' } : view === 'bosses' ? { kind: 'boss' } : { kind: 'task' })}><Icon name="plus" size={18}/>{view === 'habits' ? 'Nuevo hábito' : view === 'bosses' ? 'Nuevo jefe' : 'Nueva misión'}</button></div>
         {error && <div className="error-banner" role="alert">{error}<button onClick={() => { void refresh(); }}>Reintentar</button></div>}
         {loading && <div className="loading">Preparando tu aventura…</div>}

@@ -1,5 +1,8 @@
 package ec.edu.espe.pa.taskgotchi.controller;
 
+import ec.edu.espe.pa.taskgotchi.security.JsonSecurityErrorHandler;
+import ec.edu.espe.pa.taskgotchi.security.JwtService;
+import org.springframework.security.test.context.support.WithMockUser;
 import tools.jackson.databind.ObjectMapper;
 import ec.edu.espe.pa.taskgotchi.config.SecurityConfig;
 import ec.edu.espe.pa.taskgotchi.dto.BossResponse;
@@ -23,7 +26,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(BossController.class)
-@Import(SecurityConfig.class)
+@Import({SecurityConfig.class, JwtService.class, JsonSecurityErrorHandler.class})
+@WithMockUser
 class BossControllerTest {
 
     @Autowired

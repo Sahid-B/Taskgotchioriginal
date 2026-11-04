@@ -1,5 +1,6 @@
 package ec.edu.espe.pa.taskgotchi.service.impl;
 
+import ec.edu.espe.pa.taskgotchi.aspect.Auditable;
 import ec.edu.espe.pa.taskgotchi.dto.HabitLogResponse;
 import ec.edu.espe.pa.taskgotchi.dto.HabitRequest;
 import ec.edu.espe.pa.taskgotchi.dto.HabitResponse;
@@ -93,6 +94,7 @@ public class HabitServiceImpl implements HabitService {
 
     @Override
     @Transactional
+    @Auditable("HABIT_CHECKED")
     public HabitResponse checkHabit(Long id) {
         Long userId = currentUserProvider.getCurrentUserId();
         Habit habit = habitRepository.findByIdAndUserId(id, userId)

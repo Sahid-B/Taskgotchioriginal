@@ -17,16 +17,27 @@ class TaskFlowIntegrationTest {
     @LocalServerPort int port;
     @Autowired ObjectMapper json;
     final HttpClient client = HttpClient.newHttpClient();
+    String token;
 
     HttpResponse<String> call(String method, String path, String body) throws Exception {
         var request = HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port + path))
                 .header("Content-Type", "application/json")
                 .method(method, body == null ? HttpRequest.BodyPublishers.noBody() : HttpRequest.BodyPublishers.ofString(body));
+        if (token != null) request.header("Authorization", "Bearer " + token);
         return client.send(request.build(), HttpResponse.BodyHandlers.ofString());
+    }
+
+    String register(String prefix) throws Exception {
+        String user = prefix + System.nanoTime();
+        var response = call("POST", "/api/v1/auth/register", json.writeValueAsString(Map.of(
+                "username", user, "email", user + "@espe.edu.ec", "password", "Sintetica_2026")));
+        assertEquals(201, response.statusCode());
+        return json.readTree(response.body()).get("token").asString();
     }
 
     @Test
     void realDatabaseFlowHonorsContractAndDoesNotRewardTwice() throws Exception {
+        token = register("flujo");
         String path = "/api/v1/tasks";
         String body = json.writeValueAsString(Map.of("code", "IT-" + System.nanoTime(), "title", "Mision de integracion",
                 "estimatedHours", 1.25, "priority", "HIGH", "difficulty", "MEDIUM", "active", true));

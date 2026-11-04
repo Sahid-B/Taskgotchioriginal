@@ -1,5 +1,6 @@
 package ec.edu.espe.pa.taskgotchi.service.impl;
 
+import ec.edu.espe.pa.taskgotchi.aspect.Auditable;
 import ec.edu.espe.pa.taskgotchi.dto.*;
 import ec.edu.espe.pa.taskgotchi.entity.*;
 import ec.edu.espe.pa.taskgotchi.exception.BusinessRuleException;
@@ -35,6 +36,7 @@ public class BossServiceImpl implements BossService {
     }
 
     @Transactional
+    @Auditable("BOSS_CREATED")
     public BossResponse createBoss(CreateBossRequest request) {
         User user = userRepository.findById(currentUserProvider.getCurrentUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
@@ -59,6 +61,7 @@ public class BossServiceImpl implements BossService {
     }
 
     @Transactional
+    @Auditable("BOSS_SUBTASK_COMPLETED")
     public TaskResponse completeBossSubtask(Long bossId, Long subtaskId) {
         findBoss(bossId);
         Task task = taskRepository.findByIdAndUserId(subtaskId, currentUserProvider.getCurrentUserId())

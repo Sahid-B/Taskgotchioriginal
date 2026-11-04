@@ -1,5 +1,6 @@
 package ec.edu.espe.pa.taskgotchi.service.impl;
 
+import ec.edu.espe.pa.taskgotchi.aspect.Auditable;
 import ec.edu.espe.pa.taskgotchi.dto.PageResponse;
 import ec.edu.espe.pa.taskgotchi.dto.PetEventResponse;
 import ec.edu.espe.pa.taskgotchi.dto.PetResponse;
@@ -55,6 +56,7 @@ public class PetServiceImpl implements PetService {
 
     @Override
     @Transactional
+    @Auditable("PET_FED")
     public PetResponse feedPet() {
         Long userId = currentUserProvider.getCurrentUserId();
         Pet pet = getPetByUserId(userId);
@@ -78,6 +80,7 @@ public class PetServiceImpl implements PetService {
 
     @Override
     @Transactional
+    @Auditable("PET_PLAYED")
     public PetResponse playWithPet() {
         Long userId = currentUserProvider.getCurrentUserId();
         Pet pet = getPetByUserId(userId);
@@ -100,6 +103,7 @@ public class PetServiceImpl implements PetService {
 
     @Override
     @Transactional
+    @Auditable("PET_RESTED")
     public PetResponse restPet() {
         Long userId = currentUserProvider.getCurrentUserId();
         Pet pet = getPetByUserId(userId);
@@ -126,6 +130,7 @@ public class PetServiceImpl implements PetService {
 
     @Override
     @Transactional
+    @Auditable("REWARD_GRANTED")
     public Pet addXpAndCoins(Long userId, int xp, int coins, String eventReason) {
         Pet pet = getPetByUserId(userId);
         applyTimeDecay(pet);

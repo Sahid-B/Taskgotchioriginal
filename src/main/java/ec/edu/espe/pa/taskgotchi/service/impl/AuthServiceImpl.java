@@ -10,6 +10,7 @@ import ec.edu.espe.pa.taskgotchi.entity.Pet;
 import ec.edu.espe.pa.taskgotchi.entity.User;
 import ec.edu.espe.pa.taskgotchi.repository.PetRepository;
 import ec.edu.espe.pa.taskgotchi.repository.UserRepository;
+import ec.edu.espe.pa.taskgotchi.security.JwtService;
 import ec.edu.espe.pa.taskgotchi.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -24,6 +25,7 @@ public class AuthServiceImpl implements AuthService {
     private final PetRepository petRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
     @Override
     @Transactional
@@ -49,9 +51,9 @@ public class AuthServiceImpl implements AuthService {
                 .build();
         petRepository.save(pet);
 
-        String placeholderToken = "TODO_JWT_TOKEN_FOR_USER_" + user.getId();
+        String token = jwtService.issueToken(user.getId(), user.getUsername());
 
-        return new AuthResponse(placeholderToken, userMapper.toResponse(user));
+        return new AuthResponse(token, userMapper.toResponse(user));
     }
 
     @Override
@@ -65,8 +67,8 @@ public class AuthServiceImpl implements AuthService {
             throw new UnauthorizedException("Credenciales inválidas");
         }
 
-        String placeholderToken = "TODO_JWT_TOKEN_FOR_USER_" + user.getId();
+        String token = jwtService.issueToken(user.getId(), user.getUsername());
 
-        return new AuthResponse(placeholderToken, userMapper.toResponse(user));
+        return new AuthResponse(token, userMapper.toResponse(user));
     }
 }

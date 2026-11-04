@@ -1,0 +1,133 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ---------- CI: integración continua ----------
+  backend:
+    name: Backend · tests y empaquetado
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Pruebas unitarias e integración (H2)
+        run: |
+          chmod +x mvnw
+          ./mvnw --batch-mode --no-transfer-progress verify
+      - name: Publicar reportes de pruebas
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-reports
+          path: target/surefire-reports/
+          if-no-files-found: ignore
+      - name: Guardar JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-jar
+          path: target/*.jar
+          if-no-files-found: error
+
+  frontend:
+    name: Frontend · type-check y build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - name: Compilar (tsc + vite build)
+        run: npm run build
+        env:
+          VITE_API_BASE_URL: http://localhost:8080/api/v1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist/
+          if-no-files-found: error
+
+  api-contract:
+    name: API · colección Postman con Newman
+    needs: backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: tools/package-lock.json
+      - uses: actions/download-artifact@v4
+        with:
+          name: backend-jar
+          path: build
+      - name: Arrancar la API en modo demo (H2)
+        run: |
+          nohup java -jar "$(ls build/*.jar | grep -v plain | head -n1)" --spring.profiles.active=h2 > api.log 2>&1 &
+          for i in $(seq 1 60); do
+            curl -fs http://127.0.0.1:8080/v3/api-docs > /dev/null && exit 0
+            sleep 2
+          done
+          cat api.log; exit 1
+      - name: Ejecutar colección
+        run: |
+          npm --prefix tools ci --no-audit --no-fund
+          npm --prefix tools run lab
+      - name: Guardar evidencias
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: newman-evidence
+          path: |
+            evidence/newman-run.json
+            evidence/lab-summary.json
+            api.log
+          if-no-files-found: ignore
+
+  # ---------- CD: entrega continua ----------
+  release:
+    name: Publicar release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [backend, frontend, api-contract]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+      - name: Empaquetar frontend
+        run: cd dist/frontend-dist && zip -r ../taskgotchi-frontend.zip .
+      - uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            dist/backend-jar/*.jar
+            dist/taskgotchi-frontend.zip

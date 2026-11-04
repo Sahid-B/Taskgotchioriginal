@@ -23,7 +23,13 @@ server:
   error:
     include-stacktrace: never
 
+logging:
+  pattern:
+    correlation: "[%X{requestId:-}] "
+
 taskgotchi:
+  monitoring:
+    slow-request-ms: ${SLOW_REQUEST_MS:1000}
   cors:
     allowed-origins: ${CORS_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}
   tasks:

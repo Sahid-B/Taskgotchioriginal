@@ -23,3 +23,4 @@
 .session-username{font-size:12px;font-weight:600;color:#47634f;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.session-logout{border:1px solid #dce5da;border-radius:7px;padding:9px 12px;background:white;color:#47634f;font-size:12px;white-space:nowrap;min-height:36px}.session-logout:hover{background:#edf4e9}
 @media(max-width:780px){.topbar{height:auto;min-height:65px;flex-wrap:wrap;gap:12px;padding-top:12px;padding-bottom:12px}.topbar-right{gap:12px;flex-wrap:wrap}.session-username{max-width:100px}}
 @media(max-width:520px){.topbar .breadcrumb{flex:1}.topbar-right{width:100%;justify-content:flex-end}.session-username{margin-right:auto;max-width:140px}.session-logout{font-size:11px}.topbar-right .coin-wallet{order:-1}}
+.customize-link{background:none;border:0;color:#53824a;font-size:12px;font-weight:600;padding:8px 0 0;cursor:pointer;text-align:left}.customize-link:hover{text-decoration:underline}

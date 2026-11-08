@@ -17,3 +17,5 @@ frontend/dist/
 .postman/
 postman/globals/
 evidence/private/
+
+*.local.txt

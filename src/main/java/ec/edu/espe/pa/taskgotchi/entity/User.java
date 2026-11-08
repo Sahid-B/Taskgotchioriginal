@@ -30,6 +30,18 @@ public class User {
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
+    @Column(length = 10)
+    private String avatarGender;
+
+    @Column(length = 7)
+    private String shirtColor;
+
+    @Column(length = 7)
+    private String pantsColor;
+
+    @Column(length = 7)
+    private String hairColor;
+
     @PrePersist
     public void prePersist() {
         if (createdAt == null) {

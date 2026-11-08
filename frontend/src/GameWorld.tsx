@@ -1,15 +1,17 @@
 import React, { useEffect, useRef } from 'react';
 import { Pet, Task } from './types';
+import { Avatar, DEFAULT_AVATAR, drawCharacter } from './avatar/avatar';
+import { PixelIcon } from './minigames/PixelIcon';
 import './game.css';
 
 type Props = {
-  pet: Pet; task?: Task; busy: boolean; celebrate: boolean;
+  pet: Pet; avatar?: Avatar; task?: Task; onCustomize?: () => void; busy: boolean; celebrate: boolean;
   onMissions: () => void; onCreate: () => void; onBosses: () => void;
   onCare: (kind: 'feed' | 'play' | 'rest') => void; onComplete: (task: Task) => void;
 };
 const W = 960, H = 510, FLOOR = 410;
 const locations = [
-  { x: 105, label: 'COCINA', key: 'feed', hint: 'Alimentar · 10 monedas' },
+  { x: 105, label: 'COCINA', key: 'feed', hint: 'Entrar a la cocina' },
   { x: 285, label: 'MISIONES', key: 'missions', hint: 'Abrir tus misiones' },
   { x: 475, label: 'TALLER', key: 'create', hint: 'Crear una nueva misión' },
   { x: 660, label: 'FOGATA', key: 'rest', hint: 'Descansar · +40 energía' },
@@ -67,14 +69,7 @@ export function GameWorld(props: Props) {
     }
     function sprite(x: number, y: number, walking: boolean, direction: number) {
       const step = walking ? Math.sin(elapsed * 15) * 3 : 0;
-      ctx.save(); ctx.translate(Math.round(x), Math.round(y));
-      rect(-13, -2, 26, 5, '#0d252755');
-      rect(-8, -13, 6, 12 + step, '#203441'); rect(2, -13, 6, 12 - step, '#203441');
-      rect(-9, -3 + step, 8, 4, '#1b2830'); rect(1, -3 - step, 8, 4, '#1b2830');
-      rect(-9, -29, 18, 17, '#e3a35c'); rect(-12, -26, 4, 13, '#b7754e'); rect(8, -26, 4, 13, '#b7754e');
-      rect(-8, -43, 17, 15, '#edc493'); rect(-10, -44, 19, 7, '#283f3c'); rect(-10, -39, 5, 10, '#283f3c');
-      rect(direction > 0 ? 4 : -5, -35, 3, 3, '#263a35'); rect(-5, -29, 10, 3, '#f5d7a3');
-      rect(-12, -25, 5, 10, '#5b7a53'); ctx.restore();
+      drawCharacter(ctx, x, y, latest.current.avatar ?? DEFAULT_AVATAR, direction, step);
     }
     function companion(x: number, y: number) {
       ctx.save(); ctx.translate(Math.round(x), Math.round(y));
@@ -163,8 +158,8 @@ export function GameWorld(props: Props) {
       <button aria-label="Saltar" onClick={() => { if (player.current.y >= FLOOR) player.current.vy = -340; canvas.current?.focus(); }}>↑</button><button className="interact" onClick={() => interact()}>E · Interactuar</button>
     </div></div>
     <div className="game-panels"><article className="quest-panel"><span className="game-overline">MISIÓN ACTIVA</span><h2>{props.task?.title || 'Tu siguiente aventura te espera'}</h2><p>{props.task?.description || 'Crea una misión que puedas completar en la vida real. Aquí la conviertes en progreso.'}</p><div>{props.task ? <><span className="quest-prize">+{props.task.xpReward} XP <small>+{props.task.coinReward} monedas</small></span><button disabled={props.busy} onClick={() => props.onComplete(props.task!)}>Ya la realicé · entregar ✓</button></> : <button onClick={props.onCreate}>Crear mi primera misión +</button>}</div><small className="real-world-note">Las recompensas se ganan al realizar tus tareas, no por caminar.</small></article>
-      <article className="companion-panel"><span className="game-overline">TU COMPAÑERO</span><h2>{props.pet.name}</h2><div className="game-bars">{[['Saciedad', props.pet.hunger], ['Ánimo', props.pet.mood], ['Energía', props.pet.energy]].map(([label, value]) => <label key={label}>{label}<progress max={100} value={Number(value)} aria-label={String(label)}/><b>{value}</b></label>)}</div><div className="game-care"><button disabled={props.busy || props.pet.coins < 10} onClick={() => props.onCare('feed')}>♧ Comida · 10 ◉</button><button disabled={props.busy || props.pet.energy < 15} onClick={() => props.onCare('play')}>♟ Jugar</button><button disabled={props.busy} onClick={() => props.onCare('rest')}>☾ Descansar</button></div></article>
+      <article className="companion-panel"><span className="game-overline">TU COMPAÑERO</span><h2>{props.pet.name}</h2><div className="game-bars">{[['Saciedad', props.pet.hunger], ['Ánimo', props.pet.mood], ['Energía', props.pet.energy]].map(([label, value]) => <label key={label}>{label}<progress max={100} value={Number(value)} aria-label={String(label)}/><b>{value}</b></label>)}</div><div className="game-care"><button disabled={props.busy} onClick={() => props.onCare('feed')}>♧ Cocina</button><button disabled={props.busy} onClick={() => props.onCare('play')}>♟ Jugar</button><button disabled={props.busy} onClick={() => props.onCare('rest')}>☾ Descansar</button></div></article>
     </div>
-    <nav className="world-shortcuts" aria-label="Lugares del mundo"><button onClick={props.onMissions}>▤ Tablón de misiones</button><button onClick={props.onCreate}>✎ Taller de misiones</button><button onClick={props.onBosses}>♜ Portal de jefes</button></nav>
+    <nav className="world-shortcuts" aria-label="Lugares del mundo">{props.onCustomize && <button onClick={props.onCustomize}><PixelIcon name="shirt" size={12}/> Personalizar personaje</button>}<button onClick={props.onMissions}>▤ Tablón de misiones</button><button onClick={props.onCreate}>✎ Taller de misiones</button><button onClick={props.onBosses}>♜ Portal de jefes</button></nav>
   </section>;
 }

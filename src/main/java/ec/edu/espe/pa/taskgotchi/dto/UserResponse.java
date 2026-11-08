@@ -6,5 +6,6 @@ public record UserResponse(
         Long id,
         String username,
         String email,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        AvatarDto avatar
 ) {}

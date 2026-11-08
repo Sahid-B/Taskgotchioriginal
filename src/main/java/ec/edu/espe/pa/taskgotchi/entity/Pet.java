@@ -3,6 +3,7 @@ package ec.edu.espe.pa.taskgotchi.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -46,6 +47,14 @@ public class Pet {
 
     @Column(nullable = false)
     private Integer coins;
+
+    private LocalDate minigameDay;
+
+    private Integer minigamePlaysToday;
+
+    private LocalDateTime lastCaressAt;
+
+    private LocalDateTime lastBonkAt;
 
     @Column(length = 255)
     private String personality;

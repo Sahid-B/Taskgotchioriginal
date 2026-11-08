@@ -3,6 +3,11 @@ package ec.edu.espe.pa.taskgotchi.controller;
 import ec.edu.espe.pa.taskgotchi.dto.PageResponse;
 import ec.edu.espe.pa.taskgotchi.dto.PetEventResponse;
 import ec.edu.espe.pa.taskgotchi.dto.PetResponse;
+import ec.edu.espe.pa.taskgotchi.dto.BonkResponse;
+import ec.edu.espe.pa.taskgotchi.dto.CaressResponse;
+import ec.edu.espe.pa.taskgotchi.dto.MinigameRequest;
+import ec.edu.espe.pa.taskgotchi.dto.MinigameResultResponse;
+import jakarta.validation.Valid;
 import ec.edu.espe.pa.taskgotchi.service.PetService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -36,6 +41,24 @@ public class PetController {
     @Operation(summary = "Jugar con la mascota", description = "Aumenta el ánimo consumiendo energía.")
     public ResponseEntity<PetResponse> playWithPet() {
         return ResponseEntity.ok(petService.playWithPet());
+    }
+
+    @PostMapping("/caress")
+    @Operation(summary = "Acariciar a la mascota", description = "Sube 5 puntos de ánimo como máximo una vez cada 20 segundos. Dentro de la espera no suma, pero responde cuántos segundos faltan.")
+    public ResponseEntity<CaressResponse> caressPet() {
+        return ResponseEntity.ok(petService.caressPet());
+    }
+
+    @PostMapping("/bonk")
+    @Operation(summary = "Golpear a la mascota", description = "Baja 5 puntos de ánimo como máximo una vez cada 10 segundos.")
+    public ResponseEntity<BonkResponse> bonkPet() {
+        return ResponseEntity.ok(petService.bonkPet());
+    }
+
+    @PostMapping("/minigame")
+    @Operation(summary = "Registrar resultado de un minijuego", description = "Aplica los efectos de jugar y entrega pequeñas recompensas en las primeras ocho partidas del día.")
+    public ResponseEntity<MinigameResultResponse> playMinigame(@Valid @RequestBody MinigameRequest request) {
+        return ResponseEntity.ok(petService.playMinigame(request));
     }
 
     @PostMapping("/rest")

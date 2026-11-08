@@ -1,6 +1,8 @@
-﻿import { FormEvent, useRef, useState } from 'react';
+import { FormEvent, useRef, useState } from 'react';
 import axios from 'axios';
 import { api, Session, setSession } from '../api/client';
+import { Avatar, DEFAULT_AVATAR } from '../avatar/avatar';
+import { CharacterCreator } from '../avatar/CharacterCreator';
 import './auth.css';
 
 type Field = 'username' | 'email' | 'password';
@@ -24,10 +26,12 @@ export default function AuthScreen() {
   const [invalid, setInvalid] = useState<FieldErrors>({});
   const [errors, setErrors] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [step, setStep] = useState<'account' | 'character'>('account');
+  const [avatar, setAvatar] = useState<Avatar>(DEFAULT_AVATAR);
   const submitting = useRef(false);
   const form = useRef<HTMLFormElement>(null);
   function switchMode(next: boolean) {
-    setRegister(next); setInvalid({}); setErrors([]);
+    setRegister(next); setInvalid({}); setErrors([]); setStep('account');
     setValues(value => ({ ...value, password: '' }));
   }
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -43,11 +47,12 @@ export default function AuthScreen() {
     else if (register && values.password.length < 6) next.password = 'La contraseña debe tener al menos 6 caracteres.';
     setInvalid(next); setErrors([]);
     const first = Object.keys(next)[0];
-    if (first) { form.current?.querySelector<HTMLInputElement>(`[name="${first}"]`)?.focus(); return; }
+    if (first) { setStep('account'); form.current?.querySelector<HTMLInputElement>(`[name="${first}"]`)?.focus(); return; }
+    if (register && step === 'account') { setStep('character'); return; }
     submitting.current = true; setLoading(true);
     try {
       const response = await api.post<Session>(register ? '/auth/register' : '/auth/login', {
-        username, password: values.password, ...(register ? { email } : {}),
+        username, password: values.password, ...(register ? { email, avatar } : {}),
       });
       setSession(response.data);
     } catch (error) { setErrors(apiErrors(error)); }
@@ -75,14 +80,20 @@ export default function AuthScreen() {
     <section className="auth-panel" aria-labelledby="auth-title">
       <div className="auth-card">
         <div className="auth-toggle" aria-label="Opciones de acceso">{[false, true].map(mode => <button key={String(mode)} type="button" aria-pressed={register === mode} disabled={loading} className={register === mode ? 'active' : ''} onClick={() => switchMode(mode)}>{mode ? 'Crear cuenta' : 'Iniciar sesión'}</button>)}</div>
-        <h2 id="auth-title">{register ? 'Tu aventura empieza aquí' : 'Qué bueno verte de nuevo'}</h2>
-        <p className="auth-intro">{register ? 'Crea tu cuenta y da el primer paso con tu Gotchi.' : 'Entra a tu espacio y continúa donde lo dejaste.'}</p>
+        {register && <p className="auth-steps" aria-label={`Paso ${step === 'account' ? 1 : 2} de 2`}><span className={step === 'account' ? 'active' : 'done'}>1 · Cuenta</span><span className={step === 'character' ? 'active' : ''}>2 · Personaje</span></p>}
+        <h2 id="auth-title">{!register ? 'Qué bueno verte de nuevo' : step === 'account' ? 'Tu aventura empieza aquí' : 'Crea a tu personaje'}</h2>
+        <p className="auth-intro">{!register ? 'Entra a tu espacio y continúa donde lo dejaste.' : step === 'account' ? 'Crea tu cuenta y da el primer paso con tu Gotchi.' : 'Elige quién acompañará a tu Gotchi y dale tu estilo. Podrás cambiarlo después.'}</p>
         <form ref={form} onSubmit={submit} noValidate aria-busy={loading}>
           {errors.length > 0 && <div className="auth-errors" role="alert"><ul>{errors.map(message => <li key={message}>{message}</li>)}</ul></div>}
-          {input('username', register ? 'Nombre de usuario' : 'Usuario o correo electrónico', 'text', 'username')}
-          {register && input('email', 'Correo electrónico', 'email', 'email')}
-          {input('password', 'Contraseña', 'password', register ? 'new-password' : 'current-password')}
-          <button className="auth-submit" type="submit" disabled={loading}>{loading ? 'Un momento…' : register ? 'Crear mi cuenta' : 'Entrar a mi mundo'}<span aria-hidden="true">→</span></button>
+          {register && step === 'character' ? <>
+            <CharacterCreator value={avatar} onChange={setAvatar} disabled={loading}/>
+            <button className="auth-back" type="button" disabled={loading} onClick={() => { setStep('account'); setErrors([]); }}>← Volver a mis datos</button>
+          </> : <>
+            {input('username', register ? 'Nombre de usuario' : 'Usuario o correo electrónico', 'text', 'username')}
+            {register && input('email', 'Correo electrónico', 'email', 'email')}
+            {input('password', 'Contraseña', 'password', register ? 'new-password' : 'current-password')}
+          </>}
+          <button className="auth-submit" type="submit" disabled={loading}>{loading ? 'Un momento…' : !register ? 'Entrar a mi mundo' : step === 'account' ? 'Siguiente: mi personaje' : 'Crear mi cuenta'}<span aria-hidden="true">→</span></button>
           <p className="auth-status" role="status">{loading ? register ? 'Creando tu cuenta…' : 'Iniciando sesión…' : ''}</p>
         </form>
         <p className="auth-bottom">Una misión a la vez. Un poco más cerca de tus metas.</p>

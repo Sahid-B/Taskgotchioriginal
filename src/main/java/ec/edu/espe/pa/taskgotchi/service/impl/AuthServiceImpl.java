@@ -1,6 +1,8 @@
 package ec.edu.espe.pa.taskgotchi.service.impl;
 
 import ec.edu.espe.pa.taskgotchi.dto.AuthResponse;
+import ec.edu.espe.pa.taskgotchi.dto.AvatarDto;
+import java.util.Locale;
 import ec.edu.espe.pa.taskgotchi.dto.LoginRequest;
 import ec.edu.espe.pa.taskgotchi.dto.RegisterRequest;
 import ec.edu.espe.pa.taskgotchi.exception.DuplicateResourceException;
@@ -37,7 +39,12 @@ public class AuthServiceImpl implements AuthService {
             throw new DuplicateResourceException("El correo electrónico ya está registrado");
         }
 
+        AvatarDto avatar = request.avatar() == null ? AvatarDto.defaults() : request.avatar();
         User user = User.builder()
+                .avatarGender(avatar.gender())
+                .shirtColor(avatar.shirtColor().toLowerCase(Locale.ROOT))
+                .pantsColor(avatar.pantsColor().toLowerCase(Locale.ROOT))
+                .hairColor(avatar.hairColor().toLowerCase(Locale.ROOT))
                 .username(request.username())
                 .email(request.email())
                 .passwordHash(passwordEncoder.encode(request.password()))

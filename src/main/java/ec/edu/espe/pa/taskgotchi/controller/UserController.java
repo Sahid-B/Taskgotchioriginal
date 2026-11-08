@@ -1,6 +1,7 @@
 package ec.edu.espe.pa.taskgotchi.controller;
 
 import ec.edu.espe.pa.taskgotchi.dto.UpdateUserRequest;
+import ec.edu.espe.pa.taskgotchi.dto.AvatarDto;
 import ec.edu.espe.pa.taskgotchi.dto.UserResponse;
 import ec.edu.espe.pa.taskgotchi.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -22,6 +23,12 @@ public class UserController {
     @Operation(summary = "Obtener perfil actual", description = "Devuelve los datos del usuario actualmente autenticado.")
     public ResponseEntity<UserResponse> getCurrentUser() {
         return ResponseEntity.ok(userService.getCurrentUser());
+    }
+
+    @PutMapping("/me/avatar")
+    @Operation(summary = "Actualizar avatar", description = "Actualiza el género y los colores del personaje del usuario autenticado.")
+    public ResponseEntity<UserResponse> updateAvatar(@Valid @RequestBody AvatarDto avatar) {
+        return ResponseEntity.ok(userService.updateAvatar(avatar));
     }
 
     @PutMapping("/me")

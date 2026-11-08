@@ -1,10 +1,12 @@
 import axios from 'axios';
+import { Avatar } from '../avatar/avatar';
 
 export interface SessionUser {
   id: number;
   username: string;
   email: string;
   createdAt: string;
+  avatar?: Avatar;
 }
 export interface Session {
   token: string;
@@ -33,6 +35,9 @@ export function setSession(value: Session): void {
   session = value;
   try { localStorage.setItem(SESSION_KEY, JSON.stringify(value)); } catch { /* Keep an in-memory session if storage is unavailable. */ }
   listeners.forEach(listener => listener());
+}
+export function updateSessionUser(user: SessionUser): void {
+  if (session) setSession({ ...session, user });
 }
 export function clearSession(): void {
   session = null;

@@ -1,6 +1,8 @@
 package ec.edu.espe.pa.taskgotchi.service.impl;
 
 import ec.edu.espe.pa.taskgotchi.dto.UpdateUserRequest;
+import ec.edu.espe.pa.taskgotchi.dto.AvatarDto;
+import java.util.Locale;
 import ec.edu.espe.pa.taskgotchi.dto.UserResponse;
 import ec.edu.espe.pa.taskgotchi.exception.BusinessRuleException;
 import ec.edu.espe.pa.taskgotchi.exception.ResourceNotFoundException;
@@ -28,6 +30,18 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
         return userMapper.toResponse(user);
+    }
+
+    @Override
+    @Transactional
+    public UserResponse updateAvatar(AvatarDto avatar) {
+        User user = userRepository.findById(currentUserProvider.getCurrentUserId())
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado"));
+        user.setAvatarGender(avatar.gender());
+        user.setShirtColor(avatar.shirtColor().toLowerCase(Locale.ROOT));
+        user.setPantsColor(avatar.pantsColor().toLowerCase(Locale.ROOT));
+        user.setHairColor(avatar.hairColor().toLowerCase(Locale.ROOT));
+        return userMapper.toResponse(userRepository.save(user));
     }
 
     @Override

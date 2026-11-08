@@ -1,0 +1,26 @@
+.character-creator{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:start;--cc-text:#284e3a;--cc-muted:#5b7059;--cc-stage:#eaf2e5;--cc-track:#edf2e9;--cc-active:#fff;--cc-ring:#2f5c3d}
+.character-creator.dark{--cc-text:#e0dfbd;--cc-muted:#95ae9a;--cc-stage:#24403d;--cc-track:#1d3839;--cc-active:#3b5a4c;--cc-ring:#e4ce8d}
+.character-stage{background:var(--cc-stage);border-radius:14px;padding:8px;display:flex;justify-content:center}
+.character-preview{display:block;image-rendering:pixelated}
+.character-options{display:grid;gap:14px;min-width:0}
+.character-creator fieldset{border:0;margin:0;padding:0;min-width:0}
+.character-creator legend{font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--cc-muted);margin-bottom:7px;padding:0}
+.gender-toggle>div{display:flex;gap:4px;background:var(--cc-track);padding:4px;border-radius:10px}
+.gender-toggle button{flex:1;min-height:38px;border-radius:7px;background:transparent;border:0;color:var(--cc-muted);font-weight:600;font-size:13px;cursor:pointer}
+.gender-toggle button.active{background:var(--cc-active);color:var(--cc-text);box-shadow:0 1px 4px #1b3a3122}
+.swatches{display:flex;flex-wrap:wrap;gap:6px}
+.swatch{width:26px;height:26px;border-radius:50%;border:2px solid #0000001f;cursor:pointer;padding:0;position:relative;flex:none}
+.swatch[aria-pressed=true],.swatch-custom.selected{outline:2px solid var(--cc-ring);outline-offset:2px}
+.swatch:focus-visible,.swatch-custom:focus-within{outline:2px solid var(--cc-ring);outline-offset:2px}
+.swatch-custom{display:flex;align-items:center;justify-content:center;background:conic-gradient(#e35d5d,#f2d16b,#6fbf73,#5b8fd9,#9b6fd1,#e35d5d);overflow:hidden}
+.swatch-custom span{color:#fff;font-weight:800;font-size:14px;text-shadow:0 0 3px #0008;pointer-events:none}
+.swatch-custom input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;border:0;padding:0}
+@media (max-width:520px){.character-creator{grid-template-columns:1fr}.character-stage{justify-self:center}}
+.avatar-modal{position:fixed;inset:0;background:#0b1a1ccc;display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
+.avatar-modal>div{background:#1b3436;border:1px solid #39524a;border-radius:14px;padding:24px;width:100%;max-width:560px;color:#d9e2ca;max-height:calc(100vh - 32px);overflow:auto}
+.avatar-modal h2{margin:0 0 4px;font-size:18px;color:#e0dfbd}
+.avatar-modal p{margin:0 0 18px;font-size:12px;color:#95ae9a}
+.avatar-modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:20px}
+.avatar-modal-actions button{padding:10px 14px;border-radius:6px;font-weight:700;font-size:12px;cursor:pointer;border:1px solid #52674d;background:#2f4c43;color:#c4cfaa}
+.avatar-modal-actions button.primary{background:#d0bd7b;color:#2d4037;border-color:#ead795}
+.avatar-modal-error{color:#f0a49a;font-size:12px;margin-top:12px}

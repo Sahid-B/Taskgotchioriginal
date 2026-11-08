@@ -3,15 +3,20 @@ import { api, SessionUser } from './api/client';
 import { Boss, Habit, PageResponse, Pet, PetEvent, Summary, Task, TaskRequest } from './types';
 import './styles.css';
 import { GameWorld } from './GameWorld';
+import { normalizeAvatar } from './avatar/avatar';
+import { AvatarEditor } from './avatar/AvatarEditor';
+import { MinigameArcade } from './minigames/MinigameArcade';
+import { PixelIcon } from './minigames/PixelIcon';
+import { Kitchen } from './kitchen/Kitchen';
 
-type View = 'play' | 'overview' | 'missions' | 'habits' | 'bosses' | 'journal';
+type View = 'play' | 'kitchen' | 'overview' | 'missions' | 'habits' | 'bosses' | 'journal';
 type Modal = { kind: 'task'; task?: Task } | { kind: 'habit' } | { kind: 'boss' } | { kind: 'delete'; task: Task } | null;
 const labels = { EASY: 'Fácil', MEDIUM: 'Media', HARD: 'Difícil', LOW: 'Baja', HIGH: 'Alta', PENDING: 'Pendiente', OVERDUE: 'Vencida', COMPLETED: 'Completada' };
 const reward = { EASY: [20, 10], MEDIUM: [50, 25], HARD: [100, 60] };
 const stages = { EGG: 'Huevo', BABY: 'Bebé', YOUNG: 'Joven', ADULT: 'Adulto', LEGENDARY: 'Legendario' };
-const views: [View, string, string][] = [['play', 'Mi mundo', 'home'], ['missions', 'Misiones', 'check'], ['habits', 'Hábitos', 'flame'], ['bosses', 'Jefes finales', 'sword'], ['journal', 'Bitácora', 'book'], ['overview', 'Mi progreso', 'spark']];
+const views: [View, string, string][] = [['play', 'Mi mundo', 'home'], ['kitchen', 'Cocina', 'pot'], ['missions', 'Misiones', 'check'], ['habits', 'Hábitos', 'flame'], ['bosses', 'Jefes finales', 'sword'], ['journal', 'Bitácora', 'book'], ['overview', 'Mi progreso', 'spark']];
 const paths: Record<string, string> = {
-  home: 'M3 10 12 3l9 7v10h-6v-6H9v6H3Z', check: 'M5 12l4 4L20 5M4 4h9M4 20h16',
+  home: 'M3 10 12 3l9 7v10h-6v-6H9v6H3Z', pot: 'M4 10h16v6a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5ZM2 10h20M9 6c0-1 1-1 1-2M13 6c0-1 1-1 1-2M18 13h3', check: 'M5 12l4 4L20 5M4 4h9M4 20h16',
   flame: 'M13 3c2 6 7 7 6 13a7 7 0 0 1-14-1c0-4 4-5 4-9 1 2 2 3 2 5 3-2 3-5 2-8Z',
   sword: 'm15 3 6 0 0 6-11 11-6-6ZM3 21l4-4M3 12l9 9', book: 'M12 6v15M12 6C8 3 4 4 2 5v14c4-1 7-1 10 2 3-3 6-3 10-2V5c-4-1-7-1-10 1Z',
   coin: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Zm0 4v10m-3-8h5m-5 6h5',
@@ -58,6 +63,8 @@ export const App: React.FC<{ user: SessionUser; onLogout: () => void }> = ({ use
   const [toast, setToast] = useState('');
   const [celebrate, setCelebrate] = useState(false);
   const [modal, setModal] = useState<Modal>(null);
+  const [editingAvatar, setEditingAvatar] = useState(false);
+  const [arcadeOpen, setArcadeOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState('');
@@ -152,7 +159,7 @@ export const App: React.FC<{ user: SessionUser; onLogout: () => void }> = ({ use
   const progress = pet ? Math.min(100, (pet.xp - previousThreshold) / (threshold - previousThreshold) * 100) : 0;
   const level = pet ? Math.floor(pet.xp / 100) + 1 : 1;
   const taskToEdit = modal?.kind === 'task' ? modal.task : undefined;
-  const headings = { play: ['Tu vida real hace avanzar esta aventura.', 'Bienvenido a tu mundo'], overview: ['Cada pequeño paso cuenta.', 'Tu aventura de hoy'], missions: ['Convierte tus pendientes en progreso.', 'Tablero de misiones'], habits: ['La constancia también da experiencia.', 'Hábitos que suman'], bosses: ['Los grandes proyectos se vencen por partes.', 'Jefes finales'], journal: ['Tu historia se escribe haciendo.', 'Bitácora de aventura'] };
+  const headings = { play: ['Tu vida real hace avanzar esta aventura.', 'Bienvenido a tu mundo'], kitchen: ['Las monedas de tus misiones se convierten en comida.', 'Cocina del bosque'], overview: ['Cada pequeño paso cuenta.', 'Tu aventura de hoy'], missions: ['Convierte tus pendientes en progreso.', 'Tablero de misiones'], habits: ['La constancia también da experiencia.', 'Hábitos que suman'], bosses: ['Los grandes proyectos se vencen por partes.', 'Jefes finales'], journal: ['Tu historia se escribe haciendo.', 'Bitácora de aventura'] };
 
   function taskCard(task: Task) {
     const done = task.status === 'COMPLETED';
@@ -175,6 +182,7 @@ export const App: React.FC<{ user: SessionUser; onLogout: () => void }> = ({ use
       <nav aria-label="Navegación principal">{views.map(([id, name, icon]) => <button key={id} aria-label={name} className={view === id ? 'nav-item active' : 'nav-item'} onClick={() => { setView(id); setError(''); }} aria-current={view === id ? 'page' : undefined}><Icon name={icon}/><span>{name}</span>{id === 'missions' && summary && <small>{summary.pendingTasks}</small>}</button>)}</nav>
       <div className="sidebar-tip"><Icon name="spark" size={23}/><h3>Pequeñas acciones.<br/>Grandes aventuras.</h3><p>Tu Gotchi crece con cada misión que completas.</p></div>
       <div className="profile"><span className="avatar">{user.username.slice(0, 2).toUpperCase()}</span><div><strong>{user.username}</strong><small>{user.email}</small></div><span className="online-dot"/></div>
+      <button className="customize-link" onClick={() => setEditingAvatar(true)}><PixelIcon name="shirt" size={13}/> Personalizar personaje</button>
     </aside>
     <main className="main-shell">
       <header className="topbar"><img className="topbar-logo" src="/logo-mascot.png" alt="Taskgotchi" width={34} height={34}/><div className="breadcrumb">Mi espacio <span>/</span> {views.find(v => v[0] === view)?.[1]}</div><div className="topbar-right"><span className="session-username" title={user.username}>{user.username}</span><button className="session-logout" onClick={onLogout}>Cerrar sesión</button><span className="connection"><i/> {summary ? 'Conectado' : 'Conectando'}</span><span className="coin-wallet"><Icon name="coin" size={17}/>{pet?.coins ?? '—'}<small>monedas</small></span></div></header>
@@ -182,11 +190,12 @@ export const App: React.FC<{ user: SessionUser; onLogout: () => void }> = ({ use
         {error && <div className="error-banner" role="alert">{error}<button onClick={() => { void refresh(); }}>Reintentar</button></div>}
         {loading && <div className="loading">Preparando tu aventura…</div>}
         {!loading && !summary && <div className="empty-state"><h2>No pudimos cargar tu aventura</h2><p>Enciende el backend y vuelve a intentarlo.</p><button className="primary" onClick={() => { setLoading(true); void refresh(); }}>Reconectar</button></div>}
-        {pet && view === 'play' && <GameWorld pet={pet} task={activeTask} busy={busy} celebrate={celebrate}
+        {pet && view === 'play' && <GameWorld pet={pet} avatar={normalizeAvatar(user.avatar)} onCustomize={() => setEditingAvatar(true)} task={activeTask} busy={busy} celebrate={celebrate}
           onMissions={() => setView('missions')} onCreate={() => openModal({kind:'task'})} onBosses={() => setView('bosses')}
-          onCare={kind => { void act(() => api.post('/pet/' + kind), kind === 'feed' ? 'Gotchi alimentado. −10 monedas.' : kind === 'rest' ? 'Gotchi recuperó energía.' : '¡Gotchi está más contento!'); }}
+          onCare={kind => { if (kind === 'play') { setArcadeOpen(true); return; } if (kind === 'feed') { setView('kitchen'); return; } void act(() => api.post('/pet/' + kind), 'Gotchi recuperó energía.'); }}
           onComplete={task => { void act(() => api.patch('/tasks/' + task.id + '/complete'), '+' + task.xpReward + ' XP · +' + task.coinReward + ' monedas. ¡Misión cumplida!', true); }}/ >}
-        {pet && view !== 'play' && <div className="dashboard-grid"><div className="main-column">
+        {pet && view === 'kitchen' && <Kitchen pet={pet} onChanged={() => { void refresh(); }}/>}
+        {pet && view !== 'play' && view !== 'kitchen' && <div className="dashboard-grid"><div className="main-column">
           {view === 'overview' && <>
             <section className={'world-card ' + (celebrate ? 'celebrate' : '')} aria-label="Mundo de tu mascota">
               <div className="world-copy"><span className="world-label"><i/> EL BOSQUE DE LOS COMIENZOS</span><h2>Una misión a la vez.<br/><span>Una mejor versión de ti.</span></h2><p>Tu compañero está listo para la próxima aventura.</p><button className="world-link" onClick={() => setView('missions')}>Elegir mi siguiente misión <Icon name="arrow" size={17}/></button></div>
@@ -205,12 +214,14 @@ export const App: React.FC<{ user: SessionUser; onLogout: () => void }> = ({ use
           {view === 'journal' && <section className="list-section"><div className="section-heading"><div><h2>Los últimos pasos de tu aventura</h2><p>Recompensas, cuidados y evoluciones guardados por el servidor.</p></div></div>{events.map(e => <article className="event-row" key={e.id}><span className="stat-icon mint"><Icon name={e.type === 'EVOLVED' ? 'spark' : 'leaf'}/></span><div><h3>{e.description}</h3><p>{new Date(e.createdAt).toLocaleString('es-EC')}</p></div></article>)}{!events.length && <div className="empty-state"><p>Tu historia comienza con la primera acción.</p></div>}</section>}
           {view === 'overview' && <section className="focus-card"><span className="focus-icon"><Icon name="clock" size={28}/></span><div><h3>Un momento para enfocarte</h3><p>{running ? 'Tu misión puede esperar a que cierres esta sesión.' : '25 minutos. Una misión. Sin distracciones.'}</p></div><strong className="timer" aria-live="off">{Math.floor(timer / 60).toString().padStart(2, '0')}:{(timer % 60).toString().padStart(2, '0')}</strong><button className="secondary" onClick={() => { if (timer === 0) setTimer(1500); setRunning(!running); }}>{running ? 'Pausar' : 'Enfocarme'}</button>{timer !== 1500 && <button className="text-button" onClick={() => { setRunning(false); setTimer(1500); }}>Reiniciar</button>}</section>}
         </div><aside className="right-column">
-          <section className={'pet-card ' + (celebrate ? 'celebrate' : '')}><div className="pet-card-heading"><h2>Tu compañero</h2><span className="badge mint">LV {level}</span></div><div className="pet-pedestal"><div className="pet-orbit"/><Creature pet={pet} large/><span className="pet-spark s1">✧</span><span className="pet-spark s2">✦</span></div><h3>{pet.name}</h3><p className="pet-stage">{stages[pet.stage]} · creciendo contigo</p><div className="xp-label"><span>Próxima evolución</span><strong>{pet.xp} / {threshold} XP</strong></div><progress className="xp-progress" value={progress} max="100" aria-label="Progreso hacia la siguiente evolución"/><div className="pet-stats"><StatBar value={pet.hunger} label="Saciedad" color="#e6ad67"/><StatBar value={pet.mood} label="Ánimo" color="#b59ad8"/><StatBar value={pet.energy} label="Energía" color="#76b89c"/></div><div className="pet-buttons"><button disabled={busy || pet.coins < 10} onClick={() => act(() => api.post('/pet/feed'), 'Gotchi alimentado. −10 monedas.')}><span>♧</span>Alimentar<small>10 monedas</small></button><button disabled={busy || pet.energy < 15} onClick={() => act(() => api.post('/pet/play'), '¡Gotchi está más contento!')}><span>♟</span>Jugar<small>15 energía</small></button><button disabled={busy} onClick={() => act(() => api.post('/pet/rest'), 'Gotchi recuperó energía.')}><span>☾</span>Descansar<small>+40 energía</small></button></div><p className="pet-note">{pet.coins < 10 ? 'Completa misiones para conseguir comida.' : 'Cuida a tu compañero entre misiones.'}</p></section>
+          <section className={'pet-card ' + (celebrate ? 'celebrate' : '')}><div className="pet-card-heading"><h2>Tu compañero</h2><span className="badge mint">LV {level}</span></div><div className="pet-pedestal"><div className="pet-orbit"/><Creature pet={pet} large/><span className="pet-spark s1">✧</span><span className="pet-spark s2">✦</span></div><h3>{pet.name}</h3><p className="pet-stage">{stages[pet.stage]} · creciendo contigo</p><div className="xp-label"><span>Próxima evolución</span><strong>{pet.xp} / {threshold} XP</strong></div><progress className="xp-progress" value={progress} max="100" aria-label="Progreso hacia la siguiente evolución"/><div className="pet-stats"><StatBar value={pet.hunger} label="Saciedad" color="#e6ad67"/><StatBar value={pet.mood} label="Ánimo" color="#b59ad8"/><StatBar value={pet.energy} label="Energía" color="#76b89c"/></div><div className="pet-buttons"><button disabled={busy} onClick={() => setView('kitchen')}><span>♧</span>Alimentar<small>Ir a la cocina</small></button><button disabled={busy} onClick={() => setArcadeOpen(true)}><span>♟</span>Jugar<small>Minijuegos</small></button><button disabled={busy} onClick={() => act(() => api.post('/pet/rest'), 'Gotchi recuperó energía.')}><span>☾</span>Descansar<small>+40 energía</small></button></div><p className="pet-note">{pet.coins < 10 ? 'Completa misiones para conseguir comida.' : 'Cuida a tu compañero entre misiones.'}</p></section>
           <section className="daily-card"><span className="eyebrow">TU SIGUIENTE PASO</span><h3>{summary?.pendingTasks ? <>Una misión menos.<br/>Un poco más de ti.</> : 'Haz espacio para algo bueno.'}</h3><p>{summary?.pendingTasks ? 'No necesitas hacerlo todo hoy. Empieza por una tarea pequeña.' : 'Añade una misión que puedas completar hoy.'}</p><button className="text-button" onClick={() => openModal({ kind: 'task' })}>Crear una misión <Icon name="arrow" size={16}/></button></section>
         </aside></div>}
         <footer className="app-footer"><span><Icon name="leaf" size={14}/> Crecer también puede ser una aventura.</span><span>Taskgotchi · Programación Avanzada</span></footer>
       </div>
     </main>
+    {arcadeOpen && pet && <MinigameArcade pet={pet} onClose={played => { setArcadeOpen(false); if (played) { setCelebrate(true); void refresh(); } }}/>}
+    {editingAvatar && <AvatarEditor user={user} onClose={saved => { setEditingAvatar(false); if (saved) setToast('¡Tu personaje tiene nuevo estilo!'); }}/>}
     {toast && <div className="toast" role="status"><Icon name="check"/>{toast}<button aria-label="Cerrar notificación" onClick={() => setToast('')}>×</button></div>}
     {modal && <div className="modal-backdrop" onMouseDown={e => { if (e.target === e.currentTarget && !busy) setModal(null); }}><section className="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div className="modal-heading"><div><p className="eyebrow">UN PASO A LA VEZ</p><h2 id="modal-title">{modal.kind === 'delete' ? 'Eliminar misión' : modal.kind === 'habit' ? 'Nuevo hábito diario' : modal.kind === 'boss' ? 'Nuevo jefe final' : taskToEdit ? 'Editar misión' : 'Tu próxima misión'}</h2></div><button className="close-button" aria-label="Cerrar formulario" onClick={() => setModal(null)} disabled={busy}>×</button></div>
       {error && <div className="form-error" role="alert">{error}</div>}

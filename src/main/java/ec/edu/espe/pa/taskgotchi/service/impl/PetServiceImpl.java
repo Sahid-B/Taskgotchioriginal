@@ -4,6 +4,10 @@ import ec.edu.espe.pa.taskgotchi.aspect.Auditable;
 import ec.edu.espe.pa.taskgotchi.dto.PageResponse;
 import ec.edu.espe.pa.taskgotchi.dto.PetEventResponse;
 import ec.edu.espe.pa.taskgotchi.dto.PetResponse;
+import ec.edu.espe.pa.taskgotchi.dto.BonkResponse;
+import ec.edu.espe.pa.taskgotchi.dto.CaressResponse;
+import ec.edu.espe.pa.taskgotchi.dto.MinigameRequest;
+import ec.edu.espe.pa.taskgotchi.dto.MinigameResultResponse;
 import ec.edu.espe.pa.taskgotchi.exception.BusinessRuleException;
 import ec.edu.espe.pa.taskgotchi.exception.ResourceNotFoundException;
 import ec.edu.espe.pa.taskgotchi.mapper.PetMapper;
@@ -20,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Service
@@ -101,6 +106,94 @@ public class PetServiceImpl implements PetService {
         return petMapper.toResponse(pet);
     }
 
+    static final int CARESS_MOOD = 5;
+    static final int CARESS_COOLDOWN_SECONDS = 20;
+    static final int BONK_MOOD = 5;
+    static final int BONK_COOLDOWN_SECONDS = 10;
+
+    @Override
+    @Transactional
+    public BonkResponse bonkPet() {
+        Pet pet = getPetByUserId(currentUserProvider.getCurrentUserId());
+        applyTimeDecay(pet);
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime last = pet.getLastBonkAt();
+        int lost = 0;
+        if (last == null || Duration.between(last, now).getSeconds() >= BONK_COOLDOWN_SECONDS) {
+            int before = pet.getMood();
+            pet.setMood(Math.max(0, before - BONK_MOOD));
+            lost = before - pet.getMood();
+            pet.setLastBonkAt(now);
+            pet.setLastUpdatedAt(now);
+            pet = petRepository.save(pet);
+            if (lost > 0) {
+                recordPetEvent(pet, PetEventType.SAD, "Tu mascota recibió golpecitos y se puso triste (-" + lost + " Ánimo)");
+            }
+        }
+        return new BonkResponse(petMapper.toResponse(pet), lost);
+    }
+
+    @Override
+    @Transactional
+    public CaressResponse caressPet() {
+        Pet pet = getPetByUserId(currentUserProvider.getCurrentUserId());
+        applyTimeDecay(pet);
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime last = pet.getLastCaressAt();
+        long elapsed = last == null ? Long.MAX_VALUE : Duration.between(last, now).getSeconds();
+        int gained = 0;
+        if (elapsed >= CARESS_COOLDOWN_SECONDS) {
+            int before = pet.getMood();
+            pet.setMood(Math.min(100, before + CARESS_MOOD));
+            gained = pet.getMood() - before;
+            pet.setLastCaressAt(now);
+            pet.setLastUpdatedAt(now);
+            elapsed = 0;
+        }
+        pet = petRepository.save(pet);
+        int wait = (int) Math.max(0, CARESS_COOLDOWN_SECONDS - elapsed);
+        return new CaressResponse(petMapper.toResponse(pet), gained, wait);
+    }
+
+    @Override
+    @Transactional
+    @Auditable("PET_MINIGAME")
+    public MinigameResultResponse playMinigame(MinigameRequest request) {
+        Pet pet = getPetByUserId(currentUserProvider.getCurrentUserId());
+        applyTimeDecay(pet);
+        if (pet.getEnergy() < 15) {
+            throw new BusinessRuleException("Tu Gotchi está demasiado cansado para jugar. Déjalo descansar.");
+        }
+
+        pet.setEnergy(pet.getEnergy() - 15);
+        pet.setMood(Math.min(100, pet.getMood() + 25));
+        pet.setHunger(Math.max(0, pet.getHunger() - 10));
+
+        LocalDate today = LocalDate.now();
+        int playsToday = today.equals(pet.getMinigameDay()) && pet.getMinigamePlaysToday() != null
+                ? pet.getMinigamePlaysToday() : 0;
+        int xp = playsToday < 8 ? Math.round(request.score() * 0.15f) : 0;
+        int coins = playsToday < 8
+                ? (request.score() >= 90 ? 3 : request.score() >= 70 ? 2 : request.score() >= 40 ? 1 : 0) : 0;
+        pet.setMinigameDay(today);
+        pet.setMinigamePlaysToday(playsToday + 1);
+        pet.setXp(pet.getXp() + xp);
+        pet.setCoins(pet.getCoins() + coins);
+        evaluateEvolution(pet);
+        pet.setLastUpdatedAt(LocalDateTime.now());
+        pet = petRepository.save(pet);
+
+        String gameName = switch (request.game()) {
+            case "CATCH" -> "Lluvia de frutas";
+            case "MEMORY" -> "Memoria del bosque";
+            case "ECHO" -> "Eco del Gotchi";
+            default -> throw new IllegalArgumentException("Minijuego desconocido");
+        };
+        recordPetEvent(pet, PetEventType.PLAYED, "Minijuego " + gameName + ": " + request.score()
+                + " puntos (+" + xp + " XP, +" + coins + " Monedas)");
+        return new MinigameResultResponse(petMapper.toResponse(pet), xp, coins, Math.max(0, 8 - playsToday - 1));
+    }
+
     @Override
     @Transactional
     @Auditable("PET_RESTED")
@@ -146,6 +239,14 @@ public class PetServiceImpl implements PetService {
         recordPetEvent(pet, PetEventType.TASK_COMPLETED, eventReason + " (+" + xp + " XP, +" + coins + " Monedas)");
 
         return pet;
+    }
+
+    @Override
+    @Transactional
+    public Pet getPetWithTimeDecay(Long userId) {
+        Pet pet = getPetByUserId(userId);
+        applyTimeDecay(pet);
+        return petRepository.save(pet);
     }
 
     private Pet getPetByUserId(Long userId) {

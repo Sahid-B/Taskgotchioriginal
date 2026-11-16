@@ -13,15 +13,21 @@ import ec.edu.espe.pa.taskgotchi.entity.User;
 import ec.edu.espe.pa.taskgotchi.repository.HabitLogRepository;
 import ec.edu.espe.pa.taskgotchi.repository.HabitRepository;
 import ec.edu.espe.pa.taskgotchi.repository.UserRepository;
+import ec.edu.espe.pa.taskgotchi.config.RequestIdFilter;
+import ec.edu.espe.pa.taskgotchi.event.HabitCheckedDomainEvent;
 import ec.edu.espe.pa.taskgotchi.security.CurrentUserProvider;
 import ec.edu.espe.pa.taskgotchi.service.HabitService;
 import ec.edu.espe.pa.taskgotchi.service.PetInternalService;
+import ec.edu.espe.pa.taskgotchi.service.RewardOutcome;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.MDC;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +39,7 @@ public class HabitServiceImpl implements HabitService {
     private final CurrentUserProvider currentUserProvider;
     private final HabitMapper habitMapper;
     private final PetInternalService petInternalService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional(readOnly = true)
@@ -133,7 +140,13 @@ public class HabitServiceImpl implements HabitService {
         int totalXp = baseBonus + streakBonus;
         int totalCoins = 10;
 
-        petInternalService.addXpAndCoins(userId, totalXp, totalCoins, "Completó hábito: " + habit.getName() + " (Racha: " + habit.getCurrentStreak() + " días)");
+        RewardOutcome reward = petInternalService.addXpAndCoins(userId, totalXp, totalCoins,
+                "Completó hábito: " + habit.getName() + " (Racha: " + habit.getCurrentStreak() + " días)");
+        String requestId = MDC.get(RequestIdFilter.MDC_KEY);
+        eventPublisher.publishEvent(new HabitCheckedDomainEvent(
+                UUID.randomUUID(), userId, habit.getId(), habit.getName(), habit.getCurrentStreak(),
+                totalXp, totalCoins, requestId,
+                reward.evolved(), reward.previousStage(), reward.newStage()));
 
         return habitMapper.toResponse(habit);
     }

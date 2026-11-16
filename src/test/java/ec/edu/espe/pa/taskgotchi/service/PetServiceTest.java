@@ -8,6 +8,7 @@ import ec.edu.espe.pa.taskgotchi.repository.PetEventRepository;
 import ec.edu.espe.pa.taskgotchi.repository.PetRepository;
 import ec.edu.espe.pa.taskgotchi.repository.UserRepository;
 import ec.edu.espe.pa.taskgotchi.security.CurrentUserProvider;
+import ec.edu.espe.pa.taskgotchi.service.RewardOutcome;
 import ec.edu.espe.pa.taskgotchi.service.impl.PetServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -71,11 +72,18 @@ class PetServiceTest {
         when(petRepository.findByUserId(1L)).thenReturn(Optional.of(pet));
         when(petRepository.save(any(Pet.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        Pet updatedPet = petService.addXpAndCoins(1L, 50, 20, "Tarea completada");
+        RewardOutcome outcome = petService.addXpAndCoins(1L, 50, 20, "Tarea completada");
 
-        assertEquals(130, updatedPet.getXp());
-        assertEquals(70, updatedPet.getCoins());
-        assertEquals(PetStage.BABY, updatedPet.getStage());
-        verify(petEventRepository, times(2)).save(any());
+        assertEquals(130, pet.getXp());
+        assertEquals(70, pet.getCoins());
+        assertEquals(PetStage.BABY, pet.getStage());
+        assertTrue(outcome.evolved());
+        assertEquals("EGG", outcome.previousStage());
+        assertEquals("BABY", outcome.newStage());
+        assertEquals(50, outcome.xpGranted());
+        assertEquals(20, outcome.coinsGranted());
+        assertFalse(outcome.eventsToLog().isEmpty());
+        // La bitácora PetEvent se persiste de forma asíncrona tras el commit (no en esta transacción/método)
+        verify(petEventRepository, never()).save(any());
     }
 }

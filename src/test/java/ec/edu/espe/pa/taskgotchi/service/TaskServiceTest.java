@@ -11,6 +11,7 @@ import ec.edu.espe.pa.taskgotchi.repository.CategoryRepository;
 import ec.edu.espe.pa.taskgotchi.repository.TaskRepository;
 import ec.edu.espe.pa.taskgotchi.repository.UserRepository;
 import ec.edu.espe.pa.taskgotchi.security.CurrentUserProvider;
+import ec.edu.espe.pa.taskgotchi.service.RewardOutcome;
 import ec.edu.espe.pa.taskgotchi.service.impl.TaskServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,9 +20,11 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -45,6 +48,8 @@ class TaskServiceTest {
     private TaskMapper taskMapper;
     @Mock
     private PetInternalService petInternalService;
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private TaskServiceImpl taskService;
@@ -115,6 +120,8 @@ class TaskServiceTest {
         when(currentUserProvider.getCurrentUserId()).thenReturn(1L);
         when(taskRepository.findByIdAndUserId(10L, 1L)).thenReturn(Optional.of(task));
         when(taskRepository.saveAndFlush(any(Task.class))).thenReturn(task);
+        when(petInternalService.addXpAndCoins(eq(1L), eq(50), eq(25), contains("Estudiar para examen")))
+                .thenReturn(new RewardOutcome(50, 25, false, "BABY", "BABY", List.of()));
         when(taskMapper.toResponse(any(Task.class))).thenReturn(new TaskResponse(
                 10L, "TSK-100", "Estudiar para examen", null, new BigDecimal("2.50"), true, null, TaskPriority.HIGH, TaskDifficulty.MEDIUM,
                 null, TaskStatus.COMPLETED, 50, 25, null, LocalDateTime.now(), LocalDateTime.now(), null, null
@@ -125,6 +132,7 @@ class TaskServiceTest {
         assertNotNull(response);
         assertEquals(TaskStatus.COMPLETED, response.status());
         verify(petInternalService, times(1)).addXpAndCoins(eq(1L), eq(50), eq(25), contains("Estudiar para examen"));
+        verify(eventPublisher, times(1)).publishEvent(any(ec.edu.espe.pa.taskgotchi.event.TaskCompletedDomainEvent.class));
     }
 
     @Test

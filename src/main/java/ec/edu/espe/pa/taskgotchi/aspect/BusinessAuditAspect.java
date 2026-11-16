@@ -1,5 +1,7 @@
 package ec.edu.espe.pa.taskgotchi.aspect;
 
+import ec.edu.espe.pa.taskgotchi.async.AuditSideEffect;
+import ec.edu.espe.pa.taskgotchi.config.RequestIdFilter;
 import ec.edu.espe.pa.taskgotchi.security.AuthenticatedUser;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.AfterReturning;
@@ -8,6 +10,8 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -16,6 +20,7 @@ import java.lang.reflect.Method;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Aspecto de auditoría de negocio. Se aplica a los métodos anotados con
@@ -33,15 +38,32 @@ public class BusinessAuditAspect {
     private static final Logger log = LoggerFactory.getLogger("BUSINESS");
     private static final List<String> SUMMARY_FIELDS = List.of("id", "status", "stage", "xp", "coins", "currentStreak", "currentHp");
 
+    private final ApplicationEventPublisher eventPublisher;
+
+    public BusinessAuditAspect(ApplicationEventPublisher eventPublisher) {
+        this.eventPublisher = eventPublisher;
+    }
+
     @AfterReturning(pointcut = "@annotation(auditable)", returning = "result")
     public void afterSuccess(JoinPoint joinPoint, Auditable auditable, Object result) {
-        log.info("event={} user={} args={} result={}", auditable.value(), currentUser(), ids(joinPoint), summarize(result));
+        Long userId = currentUserId();
+        String requestId = MDC.get(RequestIdFilter.MDC_KEY);
+        AuditSideEffect effect = new AuditSideEffect(
+                UUID.randomUUID(), userId, requestId, auditable.value(),
+                String.valueOf(ids(joinPoint)), String.valueOf(summarize(result)), false, null);
+        eventPublisher.publishEvent(effect);
     }
 
     @AfterThrowing(pointcut = "@annotation(auditable)", throwing = "ex")
     public void afterFailure(JoinPoint joinPoint, Auditable auditable, Throwable ex) {
+        // Fallos no confirmados: registrar inmediatamente (no generar efecto secundario post-commit)
         log.info("event={} user={} args={} result=FAILED reason={}", auditable.value(), currentUser(), ids(joinPoint),
                 ex.getClass().getSimpleName());
+    }
+
+    static Long currentUserId() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return auth != null && auth.getPrincipal() instanceof AuthenticatedUser user ? user.id() : null;
     }
 
     static String currentUser() {

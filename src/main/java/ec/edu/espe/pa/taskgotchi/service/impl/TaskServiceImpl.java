@@ -8,16 +8,21 @@ import ec.edu.espe.pa.taskgotchi.exception.BusinessRuleException;
 import ec.edu.espe.pa.taskgotchi.exception.DuplicateResourceException;
 import ec.edu.espe.pa.taskgotchi.exception.ResourceNotFoundException;
 import ec.edu.espe.pa.taskgotchi.mapper.TaskMapper;
+import ec.edu.espe.pa.taskgotchi.config.RequestIdFilter;
 import ec.edu.espe.pa.taskgotchi.entity.*;
 import ec.edu.espe.pa.taskgotchi.repository.BossRepository;
 import ec.edu.espe.pa.taskgotchi.repository.CategoryRepository;
 import ec.edu.espe.pa.taskgotchi.repository.TaskRepository;
 import ec.edu.espe.pa.taskgotchi.repository.UserRepository;
+import ec.edu.espe.pa.taskgotchi.event.TaskCompletedDomainEvent;
 import ec.edu.espe.pa.taskgotchi.security.CurrentUserProvider;
 import ec.edu.espe.pa.taskgotchi.service.PetInternalService;
+import ec.edu.espe.pa.taskgotchi.service.RewardOutcome;
 import ec.edu.espe.pa.taskgotchi.service.TaskService;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.MDC;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -26,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -38,6 +44,7 @@ public class TaskServiceImpl implements TaskService {
     private final CurrentUserProvider currentUserProvider;
     private final TaskMapper taskMapper;
     private final PetInternalService petInternalService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional(readOnly = true)
@@ -260,7 +267,15 @@ public class TaskServiceImpl implements TaskService {
         task = taskRepository.saveAndFlush(task);
 
         String reason = "Completó la tarea: " + task.getTitle();
-        petInternalService.addXpAndCoins(userId, task.getXpReward(), task.getCoinReward(), reason);
+        RewardOutcome reward = petInternalService.addXpAndCoins(userId, task.getXpReward(), task.getCoinReward(), reason);
+
+        boolean evolved = reward.evolved();
+        String prevStage = reward.previousStage();
+        String newStage = reward.newStage();
+        boolean bossDefeated = false;
+        String bossTitle = null;
+        int bossBonusXp = 0;
+        int bossBonusCoins = 0;
 
         if (task.getBoss() != null) {
             Boss boss = task.getBoss();
@@ -271,11 +286,29 @@ public class TaskServiceImpl implements TaskService {
 
                 if (newHp == 0) {
                     boss.setStatus(BossStatus.DEFEATED);
-                    petInternalService.addXpAndCoins(userId, 150, 100, "¡Derrotó al Jefe " + boss.getTitle() + "!");
+                    bossDefeated = true;
+                    bossTitle = boss.getTitle();
+                    bossBonusXp = 150;
+                    bossBonusCoins = 100;
+                    RewardOutcome bossReward = petInternalService.addXpAndCoins(userId, bossBonusXp, bossBonusCoins,
+                            "¡Derrotó al Jefe " + boss.getTitle() + "!");
+                    if (bossReward.evolved()) {
+                        evolved = true;
+                        if (prevStage == null) prevStage = bossReward.previousStage();
+                        newStage = bossReward.newStage();
+                    }
                 }
                 bossRepository.save(boss);
             }
         }
+
+        String requestId = MDC.get(RequestIdFilter.MDC_KEY);
+        eventPublisher.publishEvent(new TaskCompletedDomainEvent(
+                UUID.randomUUID(), userId, task.getId(), task.getTitle(),
+                task.getXpReward(), task.getCoinReward(), requestId,
+                evolved, prevStage, newStage,
+                bossDefeated, bossTitle, bossBonusXp, bossBonusCoins
+        ));
 
         return taskMapper.toResponse(task);
     }

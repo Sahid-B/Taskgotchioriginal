@@ -99,7 +99,13 @@ No se puede editar una misión completada ni completar una inactiva.
 
 ## Verificar
 ```powershell
+# Pruebas backend (incluye procesamiento asíncrono post-commit)
 .\mvnw.cmd --batch-mode --no-transfer-progress test
+
+# Pruebas específicas del procesamiento asíncrono
+.\mvnw.cmd test "-Dtest=TaskServiceTest,HabitServiceTest,PetServiceTest,AuditInterceptorTest,TaskFlowIntegrationTest,AsyncProcessingIntegrationTest"
+
+# Compilación frontend y laboratorio API (Newman)
 npm.cmd --prefix frontend run build
 npm.cmd --prefix tools ci --no-audit --no-fund
 npm.cmd --prefix tools run lab
@@ -108,6 +114,42 @@ La última orden usa Newman para ejecutar la misma colección exportable de Post
 Los resultados quedan en evidence/newman-run.json y evidence/lab-summary.json.
 El Collection Runner de Postman usa los archivos de postman/ y el entorno PA-Lab2-local.
 La colección controla el orden para ejecutar la eliminación al final.
+
+## Procesamiento asíncrono de misiones
+El flujo principal de `PATCH /api/v1/tasks/{id}/complete` conserva en la transacción principal: validación y propiedad, cambio a `COMPLETED`, entrega de XP/monedas, actualización/evolución de la mascota y daño/recompensas de jefe (con protección contra duplicados y `@Version` en tareas).
+
+Tras el commit se procesan en segundo plano (`@TransactionalEventListener(AFTER_COMMIT)` + `@Async("taskgotchiExecutor")`): bitácora informativa `PetEvent`, auditoría de negocio confirmada y notificaciones internas (evolución/jefe derrotado). Los eventos son inmutables, incluyen `eventId`, `userId`, `taskId` (cuando aplica), recompensas, datos de notificación y `requestId`, y solo transportan identificadores/datos simples.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant C as Cliente
+    participant T as TaskServiceImpl (tx principal)
+    participant DB as PostgreSQL/H2
+    participant P as ApplicationEventPublisher
+    participant L as DomainEventAsyncListener (tg-async-*)
+    participant S as SecondaryEffectProcessor (nueva tx)
+
+    C->>T: PATCH /api/v1/tasks/{id}/complete
+    T->>DB: Validar, completar tarea, XP/monedas, evolución, jefe
+    T->>P: Publicar evento inmutable (eventId, requestId, userId...)
+    T-->>C: 200 TaskResponse (resultado confirmado)
+    P-->>L: AFTER_COMMIT
+    L->>S: Ejecutar efectos con idempotencia (eventId + tipo)
+    S->>DB: PetEvent / auditoría / notificación (tx independiente)
+    Note over S,DB: 3 intentos totales, backoff 200ms exponencial; fallos transitorios se registran y pueden reprocesarse
+```
+
+Configuración del ejecutor `taskgotchiExecutor`: `corePoolSize=2`, `maxPoolSize=4`, `queueCapacity=100`, prefijo `tg-async-`, `CallerRunsPolicy`, apagado ordenado con espera de hasta 20 s. Se propaga y restaura `MDC`/`SecurityContext` por tarea y se limpia al finalizar.
+
+**Idempotencia y fallos:** cada efecto se registra en `async_processed_effects` con restricción única (`event_id`, `effect_type`) y se procesa de forma atómica. Hasta 3 intentos totales para errores transitorios (200 ms inicial, exponencial); sin reintentos para errores de validación/negocio. Los fallos se registran con `eventId`, `requestId` y `userId`, se persisten y un reprocesador programado los reintenta dentro del límite. Un fallo secundario no revierte recompensas ya confirmadas.
+
+**Limitaciones:** `CallerRunsPolicy` puede ejecutar trabajo secundario en el hilo llamador cuando se satura la cola, aumentando la latencia de la respuesta. Los eventos publicados en memoria no sobreviven a una caída abrupta del proceso antes de persistir/procesar sus efectos; este mecanismo no sustituye un outbox transaccional (el estado de efectos procesados/fallidos sí se persiste para idempotencia y reproceso dentro del sistema).
+
+## Bitácora breve de cambios y validaciones
+- **Implementación:** `AsyncConfig` (executor + propagación/restauración de MDC/SecurityContext), eventos de dominio inmutables, listener `AFTER_COMMIT` + `@Async`, coordinador con idempotencia/reintentos/fallos persistidos, procesador secundario con transacciones nuevas, publicación desde `TaskServiceImpl.completeTask` y `HabitServiceImpl.checkHabit`, auditoría de negocio confirmada movida a procesamiento post-commit, adaptación de observabilidad (tiempos principal/secundario, hilo, resultado/errores).
+- **Validaciones ejecutadas (entorno local, Windows, perfil H2 en pruebas):** `TaskServiceTest,HabitServiceTest,PetServiceTest,AuditInterceptorTest` (11 pruebas, OK), `AsyncProcessingIntegrationTest` (4 pruebas, OK: recompensas confirmadas + efectos post-commit en otro hilo, rollback sin efectos secundarios, fallo secundario sin pérdida de recompensas y registro de fallo, reintento idempotente con `requestId/userId` preservados), `TaskFlowIntegrationTest` (1 prueba, OK, contrato y no duplicación de recompensas).
+- **No ejecutado en este entorno por alcance/tiempo:** suite completa `mvnw test` sin filtro, `frontend build`, Newman/lab (`npm.cmd --prefix tools run lab`). No se afirma que hayan pasado. Pasos para demostración: completar una misión (`PATCH /api/v1/tasks/{id}/complete`) y observar respuesta inmediata con recompensas; revisar logs `Procesamiento secundario`/`BUSINESS`/`NOTIFICATION` y tabla `async_processed_effects` para evidenciar post-commit, hilo `tg-async-*`, `requestId` y estado de efectos.
 
 Consulta de persistencia:
 ```powershell

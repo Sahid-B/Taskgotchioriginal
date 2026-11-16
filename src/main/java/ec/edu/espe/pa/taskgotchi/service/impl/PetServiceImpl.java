@@ -17,6 +17,7 @@ import ec.edu.espe.pa.taskgotchi.repository.PetRepository;
 import ec.edu.espe.pa.taskgotchi.repository.UserRepository;
 import ec.edu.espe.pa.taskgotchi.security.CurrentUserProvider;
 import ec.edu.espe.pa.taskgotchi.service.PetService;
+import ec.edu.espe.pa.taskgotchi.service.RewardOutcome;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
@@ -26,6 +27,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -224,21 +227,31 @@ public class PetServiceImpl implements PetService {
     @Override
     @Transactional
     @Auditable("REWARD_GRANTED")
-    public Pet addXpAndCoins(Long userId, int xp, int coins, String eventReason) {
+    public RewardOutcome addXpAndCoins(Long userId, int xp, int coins, String eventReason) {
         Pet pet = getPetByUserId(userId);
         applyTimeDecay(pet);
 
         pet.setXp(pet.getXp() + xp);
         pet.setCoins(pet.getCoins() + coins);
 
-        evaluateEvolution(pet);
+        PetStage previous = pet.getStage();
+        boolean evolved = evaluateEvolution(pet);
+        PetStage current = pet.getStage();
 
         pet.setLastUpdatedAt(LocalDateTime.now());
-        pet = petRepository.save(pet);
+        petRepository.save(pet);
 
-        recordPetEvent(pet, PetEventType.TASK_COMPLETED, eventReason + " (+" + xp + " XP, +" + coins + " Monedas)");
-
-        return pet;
+        List<RewardOutcome.PetEventLog> events = new ArrayList<>();
+        events.add(new RewardOutcome.PetEventLog(PetEventType.TASK_COMPLETED,
+                eventReason + " (+" + xp + " XP, +" + coins + " Monedas)"));
+        if (evolved) {
+            events.add(new RewardOutcome.PetEventLog(PetEventType.EVOLVED,
+                    "¡Felicidades! Tu mascota ha evolucionado a " + current.name()));
+        }
+        return new RewardOutcome(xp, coins, evolved,
+                previous != null ? previous.name() : null,
+                current != null ? current.name() : null,
+                events);
     }
 
     @Override
@@ -280,7 +293,7 @@ public class PetServiceImpl implements PetService {
         }
     }
 
-    private void evaluateEvolution(Pet pet) {
+    private boolean evaluateEvolution(Pet pet) {
         PetStage currentStage = pet.getStage();
         PetStage newStage = currentStage;
 
@@ -296,8 +309,9 @@ public class PetServiceImpl implements PetService {
 
         if (newStage != currentStage) {
             pet.setStage(newStage);
-            recordPetEvent(pet, PetEventType.EVOLVED, "¡Felicidades! Tu mascota ha evolucionado a " + newStage.name());
+            return true;
         }
+        return false;
     }
 
     private void recordPetEvent(Pet pet, PetEventType type, String description) {

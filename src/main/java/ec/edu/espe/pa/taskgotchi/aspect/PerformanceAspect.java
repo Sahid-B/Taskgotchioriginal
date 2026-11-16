@@ -38,18 +38,25 @@ public class PerformanceAspect {
     public Object measure(ProceedingJoinPoint joinPoint) throws Throwable {
         long start = System.nanoTime();
         String method = joinPoint.getSignature().getDeclaringType().getSimpleName() + "." + joinPoint.getSignature().getName();
+        String thread = Thread.currentThread().getName();
         try {
-            return joinPoint.proceed();
+            Object result = joinPoint.proceed();
+            logElapsed(method, thread, start, "OK", null);
+            return result;
         } catch (Throwable ex) {
-            log.debug("{} lanzó {}", method, ex.getClass().getSimpleName());
+            logElapsed(method, thread, start, "ERROR", ex.getClass().getSimpleName());
             throw ex;
-        } finally {
-            long elapsedMs = (System.nanoTime() - start) / 1_000_000;
-            if (elapsedMs >= slowMethodMs) {
-                log.warn("Método lento: {} tardó {} ms (umbral {} ms)", method, elapsedMs, slowMethodMs);
-            } else if (log.isDebugEnabled()) {
-                log.debug("{} tardó {} ms", method, elapsedMs);
-            }
+        }
+    }
+
+    private void logElapsed(String method, String thread, long start, String result, String error) {
+        long elapsedMs = (System.nanoTime() - start) / 1_000_000;
+        if (elapsedMs >= slowMethodMs) {
+            log.warn("Proceso principal lento: method={} thread={} elapsedMs={} result={} error={} thresholdMs={}",
+                    method, thread, elapsedMs, result, error, slowMethodMs);
+        } else if (log.isDebugEnabled()) {
+            log.debug("Proceso principal: method={} thread={} elapsedMs={} result={} error={}",
+                    method, thread, elapsedMs, result, error);
         }
     }
 }

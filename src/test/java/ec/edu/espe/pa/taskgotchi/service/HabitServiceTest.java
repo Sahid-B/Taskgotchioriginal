@@ -9,6 +9,7 @@ import ec.edu.espe.pa.taskgotchi.repository.HabitLogRepository;
 import ec.edu.espe.pa.taskgotchi.repository.HabitRepository;
 import ec.edu.espe.pa.taskgotchi.repository.UserRepository;
 import ec.edu.espe.pa.taskgotchi.security.CurrentUserProvider;
+import ec.edu.espe.pa.taskgotchi.service.RewardOutcome;
 import ec.edu.espe.pa.taskgotchi.service.impl.HabitServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,8 +17,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -39,6 +42,8 @@ class HabitServiceTest {
     private HabitMapper habitMapper;
     @Mock
     private PetInternalService petInternalService;
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private HabitServiceImpl habitService;
@@ -67,6 +72,8 @@ class HabitServiceTest {
         when(habitRepository.findByIdAndUserId(5L, 1L)).thenReturn(Optional.of(habit));
         when(habitLogRepository.existsByHabitIdAndDate(eq(5L), any(LocalDate.class))).thenReturn(false);
         when(habitRepository.save(any(Habit.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(petInternalService.addXpAndCoins(eq(1L), eq(30), eq(10), contains("Ejercicio")))
+                .thenReturn(new RewardOutcome(30, 10, false, "BABY", "BABY", List.of()));
         when(habitMapper.toResponse(any(Habit.class))).thenReturn(new HabitResponse(
                 5L, "Ejercicio", "DAILY", 3, 3, LocalDate.now(), true
         ));
@@ -77,6 +84,7 @@ class HabitServiceTest {
         assertEquals(3, response.currentStreak());
         assertEquals(3, response.bestStreak());
         verify(petInternalService, times(1)).addXpAndCoins(eq(1L), eq(30), eq(10), contains("Ejercicio"));
+        verify(eventPublisher, times(1)).publishEvent(any(ec.edu.espe.pa.taskgotchi.event.HabitCheckedDomainEvent.class));
     }
 
     @Test
